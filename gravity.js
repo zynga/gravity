@@ -1,20 +1,51 @@
 /*global Buffer, console, process, require*/
 var
+	// Parse command line args
+	args = (function (argv) {
+		var
+			len = argv.length,
+			arg2 = len > 2 && argv[2],
+			arg3 = len > 3 && argv[3],
+			arg4 = len > 4 && argv[4],
+			slash = arg3 && (arg3.length - 1),
+			args = {},
+			hostPort
+		;
+
+		if (len < 4 ||
+			(arg2 != 'serve' && arg2 != 'build') ||
+			(arg2 == 'build' && len < 5))
+		{
+			console.log('Usage:');
+			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
+			console.log('    or');
+			console.log('  gravity build <dir> <outdir>');
+			process.exit(1);
+		}
+
+		args.serve = arg2 == 'serve';
+		args.build = arg2 == 'build';
+		args.dir = arg3.charAt(slash) == '/' ? arg3.substr(0, slash) : arg3;
+
+		if (args.serve) {
+			hostPort = (arg4 || ':').split(':');
+			args.host = hostPort[0];
+			args.port = hostPort[1];
+		}
+
+		if (args.build) {
+			args.outDir = arg4;
+		}
+
+		return args;
+	}(process.argv)),
+
+	baseDir = args.dir,
+
 	atom = require('./atom/atom'),
 	http = require('http'),
 	url = require('url'),
 	fs = require('fs'),
-	spawn = require('child_process').spawn,
-
-	// Parse command line args
-	argv = process.argv,
-	numArgs = argv.length,
-	enoughArgs = numArgs == 4 || numArgs == 5,
-	arg2 = enoughArgs ? argv[2] : undefined,
-	arg3 = enoughArgs ? argv[3] : undefined,
-	arg4 = enoughArgs ? argv[4] : undefined,
-	arg3last = arg3.length - 1,
-	baseDir = arg3.charAt(arg3last) == '/' ? arg3.substr(0, arg3last) : arg3,
 
 	// Gravity Map
 	gravMapFileName = 'gravity.map',
@@ -23,33 +54,24 @@ var
 	map,
 
 	// Server args
-	commandServe = arg2 == 'serve',
 	defaultHost = '127.0.0.1',
 	defaultPort = 1337,
-	hostPort = commandServe && (arg4 || ':').split(':'),
-	serverHost = commandServe && (hostPort[0] || defaultHost),
-	serverPort = commandServe && (hostPort[1] || defaultPort),
+	serverHost = args.host || defaultHost,
+	serverPort = args.port || defaultPort,
 
 	// Build args
-	commandBuild = arg2 == 'build',
-	outDir = commandBuild && arg4,
+	outDir = args.outDir,
 
 	// Forward declare functions
 	getTargetContent
 ;
 
-if (!commandServe && (!commandBuild || !outDir)) {
-	console.log('Usage:');
-	console.log('  node gravity.js build <dir> <outDir>');
-	console.log('    ...or...');
-	console.log('  node gravity.js serve <dir> [<host>:<port>]');
-	process.exit(1);
-}
 
 function readGravMap() {
 	gravMapText = fs.readFileSync(gravMapFilePath) + '';
 	map = JSON.parse(gravMapText);
 }
+
 
 try {
 	readGravMap();
@@ -58,12 +80,14 @@ try {
 	process.exit(1);
 }
 
+
 function resolvePath(obj, path) {
 	var parts = path.split('/'), firstPart = parts.shift();
 	return path === '' ? obj :
 		parts.length == 1 ? obj[path] :
 		obj ? resolvePath(obj[firstPart], parts.join('/')) : undefined;
 }
+
 
 function addLineHints(name, content) {
 	var
@@ -78,6 +102,7 @@ function addLineHints(name, content) {
 	}
 	return out.join('\n');
 }
+
 
 function joinBuffers(buffers) {
 	var
@@ -99,6 +124,7 @@ function joinBuffers(buffers) {
 	}
 	return superBuff;
 }
+
 
 function packFile(constituents, finished) {
 	var
@@ -142,6 +168,7 @@ function packFile(constituents, finished) {
 	});
 }
 
+
 function getListing(map, callback) {
 	var keys = [];
 	for (var key in map) {
@@ -151,6 +178,7 @@ function getListing(map, callback) {
 	}
 	callback(null, keys.join('\n'), 'listing');
 }
+
 
 function wget(fileURL, callback) {
 	var chunks = [], parsed = url.parse(fileURL);
@@ -169,6 +197,7 @@ function wget(fileURL, callback) {
 		}
 	);
 }
+
 
 function getSourceContent(path, relURL, callback) {
 	// Handle proxied web resources.
@@ -210,6 +239,7 @@ function getSourceContent(path, relURL, callback) {
 	});
 }
 
+
 getTargetContent = function (map, url, callback) {
 	var
 		parts = url.split('/'),
@@ -248,6 +278,7 @@ getTargetContent = function (map, url, callback) {
 	}
 };
 
+
 function runServer() {
 	var
 		favicon = new Buffer('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAC' +
@@ -274,7 +305,8 @@ function runServer() {
 			png: 'image/png',
 			txt: 'text/plain',
 			xml: 'text/xml'
-		}
+		},
+		serverTries = 0
 	;
 
 	function log(msg) {
@@ -302,7 +334,7 @@ function runServer() {
 		return html + '</ul></body></html>';
 	}
 
-	http.createServer(function (req, res) {
+	function requestHandler(req, res) {
 		var
 			parsedURL = url.parse(req.url),
 			slashpath = parsedURL.pathname,
@@ -402,16 +434,28 @@ function runServer() {
 			res.end(content, 'binary');
 			log('200 ' + logURL);
 		});
+	}
 
-	}).listen(serverPort, serverHost);
-
-	console.log('Gravity server running on http://' + serverHost + ':' +
-		serverPort + '/');
+	while (++serverTries < 20) {
+		try {
+			http.createServer(requestHandler).listen(serverPort, serverHost);
+			console.log('Gravity server running on http://' + serverHost + ':' +
+				serverPort + '/');
+			break;
+		} catch (ex) {
+			if (serverPort === args.port) {
+				console.log('Port ' + args.port + ' not available.');
+			}
+			serverPort++;
+		}
+	}
 }
 
-if (commandServe) {
+
+if (args.serve) {
 	runServer();
 }
+
 
 function runBuild() {
 	var
@@ -549,6 +593,7 @@ function runBuild() {
 	});
 }
 
-if (commandBuild) {
+
+if (args.build) {
 	runBuild();
 }
