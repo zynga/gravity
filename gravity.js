@@ -23,7 +23,7 @@ var
 	map,
 
 	// Server args
-	commandServe = arg2 == '-serve',
+	commandServe = arg2 == 'serve',
 	defaultHost = '127.0.0.1',
 	defaultPort = 1337,
 	hostPort = commandServe && (arg4 || ':').split(':'),
@@ -31,7 +31,7 @@ var
 	serverPort = commandServe && (hostPort[1] || defaultPort),
 
 	// Build args
-	commandBuild = arg2 == '-build',
+	commandBuild = arg2 == 'build',
 	outDir = commandBuild && arg4,
 
 	// Forward declare functions
@@ -40,9 +40,9 @@ var
 
 if (!commandServe && (!commandBuild || !outDir)) {
 	console.log('Usage:');
-	console.log('  node gravity.js -build <dir> <outDir>');
+	console.log('  node gravity.js build <dir> <outDir>');
 	console.log('    ...or...');
-	console.log('  node gravity.js -serve <dir> [<host>:<port>]');
+	console.log('  node gravity.js serve <dir> [<host>:<port>]');
 	process.exit(1);
 }
 
