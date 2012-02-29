@@ -423,7 +423,6 @@ function runServer() {
 		}
 
 		reqAtom.need('content', function (content) {
-
 			// Return the file contents.
 			var
 				parts = path.split('.'),

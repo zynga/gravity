@@ -1,0 +1,76 @@
+OVERVIEW:
+
+Gravity.js is a development tool that simplifies working on complex JS projects.
+
+Often when deploying JS components, you want to compile a multitude of source
+files down to a single build result. The benefits of doing this include faster
+performance from the client perspective (due to fewer http hits to load
+scripts), and potentially simpler integration by the developer integrating your
+component. Gravity was specifically designed to ease this process.
+
+In your code project, define a JSON file called gravity.map:
+
+{
+	"final.js": [
+		"src/1.js",
+		"src/2.js",
+		...
+	]
+}
+
+This tells gravity that you want a build product called "final.js", and that it
+should be the result of concatenating various source files (or even other build
+products) together.
+
+During development, then, you can run gravity as a local server that will
+perform on-the-fly concatenation of your source. In your project dir, run:
+
+  node gravity.js serve .
+
+The server should find an available local port to attach to, and will announce
+itself:
+
+  Gravity server running on http://127.0.0.1:1337/
+
+Now you can visit http://127.0.0.1:1337/final.js to see the results. Edit a
+source file, then refresh the page to see the results instantly!
+
+Come build time, run a command like this:
+
+  node gravity.js build . <outdir>
+
+Gravity will take only your build targets and put them into <outdir>.
+
+
+MORE ADVANCED EXAMPLE:
+
+Use gravity to create localized components.  Assuming you've got localized
+strings in individual files under a 'strings' dir, you can define
+locale-specific build targets that make use of an intermediary build target
+containing all of the business logic / UI code, etc.
+
+{
+	"~engine.js": [
+		"src/utils.js",
+		"src/controller.js",
+		"src/ui.js",
+		"src/api.js",
+		"src/glue.js",
+		...
+	],
+
+	"engine-en_US.js": [
+		"strings/en_US.js",
+		"~engine.js"
+	],
+
+	"engine-es_ES.js": [
+		"strings/es_ES.js",
+		"~engine.js"
+	],
+
+	...
+}
+
+Now, with a minimum of fuss, you have nice tight bundles of localized JS
+goodness.
