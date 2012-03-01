@@ -74,3 +74,8 @@ containing all of the business logic / UI code, etc.
 
 Now, with a minimum of fuss, you have nice tight bundles of localized JS
 goodness.
+
+If you want to print out a particular build product from the command line, do
+this:
+
+  node gravity.js get . engine-es_ES.js
