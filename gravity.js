@@ -13,17 +13,21 @@ var
 		;
 
 		if (len < 4 ||
-			(arg2 != 'serve' && arg2 != 'build') ||
+			(arg2 != 'serve' && arg2 != 'get' && arg2 != 'build') ||
+			(arg2 == 'get' && len < 5) ||
 			(arg2 == 'build' && len < 5))
 		{
 			console.log('Usage:');
 			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
+			console.log('    or');
+			console.log('  gravity get <dir> <path>');
 			console.log('    or');
 			console.log('  gravity build <dir> <outdir>');
 			process.exit(1);
 		}
 
 		args.serve = arg2 == 'serve';
+		args.get = arg2 == 'get';
 		args.build = arg2 == 'build';
 		args.dir = arg3.charAt(slash) == '/' ? arg3.substr(0, slash) : arg3;
 
@@ -31,6 +35,10 @@ var
 			hostPort = (arg4 || ':').split(':');
 			args.host = hostPort[0];
 			args.port = hostPort[1];
+		}
+
+		if (args.get) {
+			args.path = arg4;
 		}
 
 		if (args.build) {
@@ -62,8 +70,11 @@ var
 	// Build args
 	outDir = args.outDir,
 
-	// Forward declare functions
-	getTargetContent
+	// Functions
+	isArray = Array.isArray || function (obj) {
+		return Object.prototype.toString.call(obj) === '[object Array]';
+	},
+	packResources
 ;
 
 
@@ -126,60 +137,6 @@ function joinBuffers(buffers) {
 }
 
 
-function packFile(constituents, finished) {
-	var
-		pack = atom.create(),
-		i = -1,
-		len = constituents.length
-	;
-
-	function fetchFile(path) {
-		if (path.charAt(0) == '~' || resolvePath(map, path)) {
-			getTargetContent(map, path, function (err, content) {
-				if (err) {
-					finished(err);
-				} else {
-					pack.set(path, content);
-				}
-			});
-		} else {
-			fs.readFile(baseDir + '/' + path, function (err, content) {
-				if (err) {
-					finished({ code: 502, message: 'Bad Gateway' });
-				} else {
-					pack.set(path, new Buffer(addLineHints(path, content + '')));
-				}
-			});
-		}
-	}
-
-	while (++i < len) {
-		fetchFile(constituents[i]);
-	}
-
-	pack.once(constituents, function () {
-		var j = -1, out = [];
-		out.push(new Buffer('/*\n * ' + constituents.join('\n * ') + '\n */\n'));
-		while (++j < len) {
-			out.push(new Buffer('\n/* ' + constituents[j] + ' */\n'));
-			out.push(arguments[j]);
-		}
-		finished(null, joinBuffers(out));
-	});
-}
-
-
-function getListing(map, callback) {
-	var keys = [];
-	for (var key in map) {
-		if (map.hasOwnProperty(key) && key.charAt(0) != '~') {
-			keys.push(key);
-		}
-	}
-	callback(null, keys.join('\n'), 'listing');
-}
-
-
 function wget(fileURL, callback) {
 	var chunks = [], parsed = url.parse(fileURL);
 	http.get(
@@ -199,102 +156,186 @@ function wget(fileURL, callback) {
 }
 
 
-function getSourceContent(path, relURL, callback) {
-	// Handle proxied web resources.
-	if (path.match(/^https?:\/\//)) {
-		wget(path, callback);
-		return;
+// Given a resource path, return an enumeration of the possible ways to split
+// the path at '/' boundaries, in order of specificity. For instance, the path
+// 'assets/images/foo.png' would be broken down like so:
+//
+//  [ [ 'assets/images/foo.png', '' ],
+//    [ 'assets/images', 'foo.png' ],
+//    [ 'assets', 'images/foo.png' ],
+//    [ '', 'assets/images/foo.png' ] ]
+//
+function getResourcePathSplits(path) {
+	var
+		parts = path.split('/'),
+		i = parts.len,
+		splits = [[path, '']]
+	;
+	while (--i >= 0) {
+		splits.push([
+			parts.slice(0, i).join('/'),
+			parts.slice(i).join('/')
+		]);
 	}
+	return splits;
+}
 
-	// Load local file.
+
+// Given a map and a resource path, drill down in the map to find the most
+// specific map node that matches the path.  Return the map node, the matched
+// path prefix, and the unmatched path suffix.
+function reduce(map, path) {
+	var mapNode, prefix, split, splits = getResourcePathSplits(path),
+		subValue, suffix;
+	while (splits.length) {
+		split = splits.shift();
+		prefix = split[0];
+		suffix = split[1];
+		mapNode = map[prefix];
+		if (mapNode) {
+			if (!suffix) {
+				return { map: mapNode, prefix: prefix, suffix: suffix };
+			}
+			if (typeof mapNode == 'object') {
+				subValue = reduce(mapNode, suffix);
+				if (subValue) {
+					subValue.prefix = prefix + '/' + subValue.prefix;
+					return subValue;
+				}
+			}
+		}
+	}
+	return { map: map, prefix: '', suffix: path };
+}
+
+
+function isJavaScript(path) {
+	return path.substr(path.length - 3) == '.js';
+}
+
+
+function getFile(path, callback, addLineHints) {
 	var filePath = baseDir + '/' + path;
+	console.log('getFile(' + filePath + ')');
 	fs.stat(filePath, function (err, stat) {
-		if (err) {
+		if (err || stat.isDirectory()) {
 			callback({ code: 404, message: 'Not Found' });
-		} else if (stat.isDirectory()) {
-			if (relURL.length) {
-				filePath += '/' + relURL;
-				fs.stat(filePath, function (err, stat) {
-					if (err) {
-						callback({ code: 404, message: 'Not Found' });
-					} else {
-						fs.readFile(filePath, callback);
-					}
-				});
-			} else {
-				getListing(path, callback);
-			}
 		} else {
-			if (relURL.length) {
-				callback({ code: 404, message: 'Not Found' });
-			} else {
-				fs.readFile(filePath, function (err, content) {
-					callback(
-						err ? { code: 500, message: 'Internal error' } : null,
-						content
-					);
-				});
-			}
+			fs.readFile(filePath, function (err, content) {
+				callback(
+					err ? { code: 500, message: 'Internal error' } : null,
+					(addLineHints && isJavaScript(filePath)) ?
+						new Buffer(addLineHints(path, content + '')) : content
+				);
+			});
 		}
 	});
 }
 
 
-getTargetContent = function (map, url, callback) {
+// Given a resource path, retrieve the associated content.  Internal requests
+// are always allowed, whereas external requests will only have access to
+// resources explicitly exposed by the gravity map.
+function getResource(internal, path, callback, addLineHints) {
+	console.log('getResource(' + internal + ', ' + path + ', ...)');
 	var
-		parts = url.split('/'),
-		nodeName = parts.shift(),
-		node = map[nodeName],
-		filePath,
-		relURL = parts.join('/')
+		reduced = reduce(map, path),
+		reducedMap = reduced.map,
+		reducedMapType = isArray(reducedMap) ? 'array' : typeof reducedMap,
+		reducedPrefix = reduced.prefix,
+		reducedSuffix = reduced.suffix,
+		temporary = path.charAt(0) == '~'
 	;
 
-	if (url === '') {
-		getListing(map, callback);
-		return;
-	}
+	if (temporary && !internal) {
+		// External request for a temporary resource.
+		callback({ code: 403, message: 'Forbidden' });
 
-	switch (typeof node) {
+	} else if (reducedSuffix) {
+		// We did NOT find an exact match in the map.
 
-		case 'object':
-			if (node.length) {
-				// Arrays specify a list of files to concatenate
-				packFile(node, callback);
+		if (!reducedPrefix && internal) {
+			getFile(path, callback, addLineHints);
+		} else if (reducedMap === true) {
+			getFile(reducedPrefix + '/' + reducedSuffix, callback, addLineHints);
+		} else if (reducedMapType == 'string') {
+			getFile(reducedMap + '/' + reducedSuffix, callback, addLineHints);
+		} else {
+			callback({ code: 404, message: 'Not Found' });
+		}
+
+	} else {
+		// We found an exact match in the map.
+
+		if (reducedMap === true || reducedMap === reducedPrefix) {
+			// A true value means this is just a local file/dir to expose.
+			getFile(reducedPrefix, callback, addLineHints);
+
+		} else if (reducedMapType == 'string') {
+			// A string value may be a web URL.
+			if (reducedMap.match(/^https?:\/\//)) {
+				wget(reducedMap, callback);
 			} else {
-				// Objects specify a subdirectory map.
-				getTargetContent(node, relURL, callback);
+				// Otherwise, it's another resource path.
+				getResource(true, reducedMap, callback, addLineHints);
 			}
-			break;
 
-		// Strings are a relative file path at which to find the resource; or,
-		// if they start with http[s]:// then we proxy them from the web.
-		case 'string':
-			getSourceContent(node, relURL, callback);
-			break;
+		} else if (reducedMapType == 'array') {
+			// An array is a list of resources to get packed together.
+			packResources(reducedMap, callback);
 
-		// Nodes not defined in the gravity map are forbidden.
-		case 'undefined':
-			callback({ code: 403, message: 'Forbidden' });
+		} else if (reducedMapType == 'object') {
+			// An object is a directory. We could return a listing...
+			// TODO: Do we really want to support listings?
+
+		} else {
+			// WTF?
+			callback({ code: 500, message: 'gravity.map is whack.' });
+		}
 	}
+}
+
+
+packResources = function (resources, callback) {
+	var
+		packer = atom.create(),
+		i = -1,
+		len = resources.length
+	;
+
+	function fetchFile(resource) {
+		getResource(
+			true,
+			resource,
+			function (err, content) {
+				if (err) {
+					callback(err);
+				} else {
+					packer.set(resource, content);
+				}
+			},
+			addLineHints
+		);
+	}
+
+	while (++i < len) {
+		fetchFile(resources[i]);
+	}
+
+	packer.once(resources, function () {
+		var j = -1, out = [];
+		out.push(new Buffer('/*\n * ' + resources.join('\n * ') + '\n */\n'));
+		while (++j < len) {
+			out.push(new Buffer('\n/* ' + resources[j] + ' */\n'));
+			out.push(arguments[j]);
+		}
+		callback(null, joinBuffers(out));
+	});
 };
 
 
 function runServer() {
 	var
-		favicon = new Buffer('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAC' +
-		'jUlEQVR42o2Ty08TURTGv06HvktLgYKlhbaakpKY0ERrZGGEGDcmxoW6pUQ3rqAbjQtDde' +
-		'lCXBhWJsX4B4grXahIjBswBFlICuJUKLY8AmU69jnt9YytDUoUJ/k67Tn3/O53Tu9VMcZw' +
-		'2PP0Wl9vcltK33y+EP8zp/oXIOy3nW1qMw5+2iqEbEZdeHxm9eGhAKXIL+WHLXnVJY3ehO' +
-		'lmIJAzwelyIa0up5c21yY3c+LdscWd+AHAo6A5eq5PDjXFOIjvsngBHnyLAcFVEXJDA9SO' +
-		'dhi7e/CFK6RfCx+HCDJZB9z3NUYGz0uj9hEnmHwDuWdz2Hg1B5cggPEMJRuwkwA+JzlUyE' +
-		'3GewTTyVigDnh5VLs7cLVo1Vw3A57HAHcR+DoOPLgN5IpgBSA7BQhrJFrPd3Yi3mGqOlD6' +
-		'vlLOTJ08LaPhBGW7LUCHB4itA2+2aWvaZAMozQLJDIVpyRbPI3/cm64DLhcJ0CNDY6eska' +
-		'Qn5Ui7ymoSjUxeIY4MLNLPFGndbsAvgPvCXkY45ZBhdJB7A2U5Ei0G7YhvACPrhTSQIDNL' +
-		'FNpWIDbdfH0GT9p0whlWcNtbAR11wPEULJKoiG3SV5HMlGksFCIWshwHwWWaqANGvZboQE' +
-		'IMteuAZpKOAGpyUMlTMbUiylXbioiFSpcL83qpvw5Q2vCvS4JTKsFC9g0qmjSlKhUgz6qd' +
-		'7NXGonY4kHI3x8PvFzy/HaQ77sYxX0Ia0ZYZ+NoYWG0Updqbb22FKhjAzMpsPx2ktweOcs' +
-		'RljnYlv4f4cjX+85P65cxmGH0+SHYLllPLQ/c+xCf+epluHbNGrJI83GKwWtVUqLHZkNOq' +
-		'IRakyUQqrtyD+f+9jb30sir/xf6i/c8PgHMsthi8/IIAAAAASUVORK5CYII=', 'base64'),
 		mimeTypes = {
 			css: 'text/css',
 			html: 'text/html',
@@ -313,25 +354,13 @@ function runServer() {
 		console.log(new Date() + ' ' + msg);
 	}
 
-	function httpError(res, code, msg, fileName) {
+	function httpError(res, code, msg, fileName, suppressLog) {
 		res.writeHead(code);
 		msg = code + ' ' + msg + ': ' + fileName;
 		res.end(msg);
-		log(msg);
-	}
-
-	function listToHTML(list) {
-		var
-			lines = list.split('\n'),
-			html = '<html><head><title></title><body><ul>',
-			i = -1, item,
-			len = lines.length
-		;
-		while (++i < len) {
-			item = lines[i];
-			html += '<li><a href="' + item + '">' + item + '</a></li>';
+		if (!suppressLog) {
+			log(msg);
 		}
-		return html + '</ul></body></html>';
 	}
 
 	function requestHandler(req, res) {
@@ -350,20 +379,10 @@ function runServer() {
 			logURL += '?' + querystring;
 		}
 
-		if (false && path.charAt(0) == '~') {
-			return httpError(res, 403, 'Forbidden', path);
-		}
-
 		if (path == 'favicon.ico') {
-			res.writeHead(200, {
-				'Content-Length': favicon.length,
-				'Content-Type': 'image/x-icon'
-			});
-			res.end(favicon);
-			return;
+			return httpError(res, 404, 'Not Found', path, true);
 		}
 
-		// Main client UI
 		if (path === '' && !querystring) {
 			res.writeHead(302, { 'Location': '/gravity.map' });
 			res.end();
@@ -375,7 +394,7 @@ function runServer() {
 			// Fetch content for source file
 			reqAtom.provide('content', function (done) {
 				var sourcePath = query.src;
-				getSourceContent(sourcePath, '', function (err, content) {
+				getResource(true, sourcePath, function (err, content) {
 					if (err) {
 						return httpError(res, err.code, err.message, path);
 					}
@@ -396,27 +415,10 @@ function runServer() {
 
 			// Fetch content for target file
 			reqAtom.provide('content', function (done) {
-				getTargetContent(map, path, function (err, content, type) {
+				getResource(false, path, function (err, content) {
 					if (err) {
 						return httpError(res, err.code, err.message, path);
 					}
-
-					if (type == 'listing') {
-						if (path && path.charAt(path.length - 1) != '/') {
-							res.writeHead(303, { Location: path + '/' });
-							res.end();
-							return;
-						}
-						content += '';
-						if (!path || path == '/') {
-							content = gravMapFileName + '\n' + content;
-						}
-						res.writeHead(200, { 'Content-Type': 'text/html' });
-						res.end(listToHTML(content + ''));
-						log('200 ' + logURL);
-						return;
-					}
-
 					done(content);
 				});
 			});
