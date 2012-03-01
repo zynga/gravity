@@ -92,14 +92,12 @@ try {
 }
 
 
-function resolvePath(obj, path) {
-	var parts = path.split('/'), firstPart = parts.shift();
-	return path === '' ? obj :
-		parts.length == 1 ? obj[path] :
-		obj ? resolvePath(obj[firstPart], parts.join('/')) : undefined;
+function isURL(str) {
+	return !!str.match(/^https?:\/\//);
 }
 
 
+// Add JavaScript line-hint comments to every 10th line of a file.
 function addLineHints(name, content) {
 	var
 		i = -1,
@@ -115,6 +113,7 @@ function addLineHints(name, content) {
 }
 
 
+// Concatentate an array of Buffers into a single one.
 function joinBuffers(buffers) {
 	var
 		i = -1, j = -1,
@@ -137,6 +136,7 @@ function joinBuffers(buffers) {
 }
 
 
+// Given a web URL, fetch the file contents.
 function wget(fileURL, callback) {
 	var chunks = [], parsed = url.parse(fileURL);
 	http.get(
@@ -168,7 +168,7 @@ function wget(fileURL, callback) {
 function getResourcePathSplits(path) {
 	var
 		parts = path.split('/'),
-		i = parts.len,
+		i = parts.length,
 		splits = [[path, '']]
 	;
 	while (--i >= 0) {
@@ -214,9 +214,10 @@ function isJavaScript(path) {
 }
 
 
+// Given a local file path (relative to baseDir), fetch the file contents.
 function getFile(path, callback, addLineHints) {
 	var filePath = baseDir + '/' + path;
-	console.log('getFile(' + filePath + ')');
+	//console.log('getFile(' + filePath + ')');
 	fs.stat(filePath, function (err, stat) {
 		if (err || stat.isDirectory()) {
 			callback({ code: 404, message: 'Not Found' });
@@ -237,7 +238,6 @@ function getFile(path, callback, addLineHints) {
 // are always allowed, whereas external requests will only have access to
 // resources explicitly exposed by the gravity map.
 function getResource(internal, path, callback, addLineHints) {
-	console.log('getResource(' + internal + ', ' + path + ', ...)');
 	var
 		reduced = reduce(map, path),
 		reducedMap = reduced.map,
@@ -246,6 +246,7 @@ function getResource(internal, path, callback, addLineHints) {
 		reducedSuffix = reduced.suffix,
 		temporary = path.charAt(0) == '~'
 	;
+	//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
 	if (temporary && !internal) {
 		// External request for a temporary resource.
@@ -273,7 +274,7 @@ function getResource(internal, path, callback, addLineHints) {
 
 		} else if (reducedMapType == 'string') {
 			// A string value may be a web URL.
-			if (reducedMap.match(/^https?:\/\//)) {
+			if (isURL(reducedMap)) {
 				wget(reducedMap, callback);
 			} else {
 				// Otherwise, it's another resource path.
@@ -296,6 +297,8 @@ function getResource(internal, path, callback, addLineHints) {
 }
 
 
+// Given a list of resource paths, fetch the contents and concatenate them
+// together into a single blob.
 packResources = function (resources, callback) {
 	var
 		packer = atom.create(),
@@ -458,6 +461,15 @@ if (args.serve) {
 }
 
 
+if (args.get) {
+	getResource(false, args.path, function (err, content) {
+		if (content) {
+			console.log(content + '');
+		}
+	});
+}
+
+
 function runBuild() {
 	var
 		dryrun = false,
@@ -475,10 +487,15 @@ function runBuild() {
 
 	var actions = {
 
-		buildDir: function (mapPath, outDir, done) {
+		buildDir: function (path, outDir, callback) {
+			var
+				a = atom.create(),
+				key,
+				reduced = reduce(map, path),
+				reducedMap = reduced.map
+			;
 			outDir += outDir.charAt(outDir.length - 1) != '/' ? '/' : '';
-			//log('buildDir(' + mapPath + ', ' + outDir + ', ...)');
-			var a = atom.create();
+			log('buildDir(' + path + ', ' + outDir + ', ...)');
 
 			// Make sure the output dir exists.
 			try {
@@ -498,8 +515,7 @@ function runBuild() {
 				// Determine which action to use for this node.
 				var
 					isString = typeof node == 'string',
-					isURL = isString && node.match(/^https?:\/\//),
-					isDir = isString && !isURL &&
+					isDir = isString && !isURL(node) &&
 						fs.statSync(baseDir + '/' + node).isDirectory(),
 					action = isString ?
 						(isDir ? 'copyDir' : 'fetchContent') :
@@ -509,36 +525,36 @@ function runBuild() {
 				// Add this build action to the queue.
 				a.chain(function (nextNode) {
 					actions[action](
-						(mapPath ? (mapPath + '/') : '') + key,
+						(path ? (path + '/') : '') + key,
 						outDir + key,
 						nextNode
 					);
 				});
 			}
 
-			var dirMap = resolvePath(map, mapPath);
-			for (var key in dirMap) {
-				if (dirMap.hasOwnProperty(key)) {
-					if (key.charAt(0) != '~') {
-						queueNode(key, dirMap[key]);
-					}
+			for (key in reducedMap) {
+				if (reducedMap.hasOwnProperty(key) && key.charAt(0) != '~') {
+					queueNode(key, reducedMap[key]);
 				}
 			}
 
-			a.chain(done);
+			a.chain(callback);
 		},
 
-		copyDir: function (mapPath, dstDir, done) {
-			//log('copyDir(' + mapPath + ', ' + dstDir + ', ...)');
+		copyDir: function (path, dstDir, callback) {
 			var
-				srcDir = resolvePath(map, mapPath),
+				reduced = reduce(map, path),
+				reducedMap = reduced.map,
+				reducedMapType = typeof reducedMap,
+				srcDir = reducedMapType == 'string' ? reducedMap : reduced.prefix,
 				command = 'cp -r ' + baseDir + '/' + srcDir + ' ' + dstDir,
 				msg = 'A ' + dstDir + '/[*]'
 			;
+			log('copyDir(' + path + ', ' + dstDir + ', ...)');
 			if (dryrun) {
 				log(command);
 				log(msg);
-				done();
+				callback();
 			} else {
 				exec(
 					command,
@@ -547,16 +563,16 @@ function runBuild() {
 							buildError('Could not copy directory: ' + srcDir);
 						}
 						log(msg);
-						done();
+						callback();
 					}
 				);
 			}
 		},
 
-		fetchContent: function (mapPath, dstPath, done) {
+		fetchContent: function (path, dstPath, done) {
 			//log('fetchContent(' + mapPath + ', ' + dstPath + ', ...)');
 			var msg = 'A ' + dstPath, ext = dstPath.split('.').pop();
-			getTargetContent(map, mapPath, function (err, content) {
+			getResource(false, path, function (err, content) {
 				if (err) {
 					buildError('Could not retrieve content for ' + dstPath);
 				}
