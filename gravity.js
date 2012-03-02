@@ -54,12 +54,17 @@ var
 	http = require('http'),
 	url = require('url'),
 	fs = require('fs'),
+	exec = require('child_process').exec,
 
 	// Gravity Map
 	gravMapFileName = 'gravity.map',
 	gravMapFilePath = baseDir + '/' + gravMapFileName,
 	gravMapText,
 	map,
+
+	// Style
+	cssConverter = require('./style/cssConverter'),
+	styleJSFilePath = __dirname + '/style/style.js',
 
 	// Server args
 	defaultHost = '127.0.0.1',
@@ -89,6 +94,11 @@ try {
 } catch (ex) {
 	console.log('Gravity: no map found at ' + gravMapFilePath);
 	process.exit(1);
+}
+
+
+function hasExtension(path, ext) {
+	return path.substr(path.length - ext.length) == ext;
 }
 
 
@@ -209,11 +219,6 @@ function reduce(map, path) {
 }
 
 
-function isJavaScript(path) {
-	return path.substr(path.length - 3) == '.js';
-}
-
-
 // Given a local file path (relative to baseDir), fetch the file contents.
 function getFile(path, callback, addLineHints) {
 	var filePath = baseDir + '/' + path;
@@ -225,7 +230,7 @@ function getFile(path, callback, addLineHints) {
 			fs.readFile(filePath, function (err, content) {
 				callback(
 					err ? { code: 500, message: 'Internal error' } : null,
-					(addLineHints && isJavaScript(filePath)) ?
+					(addLineHints && hasExtension(filePath, '.js')) ?
 						new Buffer(addLineHints(path, content + '')) : content
 				);
 			});
@@ -326,11 +331,23 @@ packResources = function (resources, callback) {
 	}
 
 	packer.once(resources, function () {
-		var j = -1, out = [];
+		var j = -1, out = [], resource, style, content;
 		out.push(new Buffer('/*\n * ' + resources.join('\n * ') + '\n */\n'));
 		while (++j < len) {
-			out.push(new Buffer('\n/* ' + resources[j] + ' */\n'));
-			out.push(arguments[j]);
+			resource = resources[j];
+			content = arguments[j];
+			if (hasExtension(resource, '.css')) {
+				if (!style) {
+					out.push(new Buffer(fs.readFileSync(styleJSFilePath) + ''));
+					style = true;
+				}
+				content = new Buffer(cssConverter.convert(content + ''));
+			}
+			out.push(new Buffer('\n/* ' + resource + ' */\n'));
+			out.push(content);
+		}
+		if (style) {
+			out.push(new Buffer('\nstyle.noConflict();\n'));
 		}
 		callback(null, joinBuffers(out));
 	});
@@ -471,10 +488,7 @@ if (args.get) {
 
 
 function runBuild() {
-	var
-		dryrun = false,
-		exec = require('child_process').exec
-	;
+	var dryrun = false;
 
 	function log(msg) {
 		console.log((dryrun ? '[dry-run] ' : '') + msg);
