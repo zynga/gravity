@@ -1,5 +1,7 @@
 /*global Buffer, console, process, require*/
 var
+	VERSION = '0.1.0',
+
 	// Parse command line args
 	args = (function (argv) {
 		var
@@ -12,6 +14,13 @@ var
 			hostPort
 		;
 
+		if (arg2 == 'version' || arg2 == 'serve' || arg2 == 'build') {
+			console.log('gravity version ' + VERSION);
+			if (arg2 == 'version') {
+				process.exit(0);
+			}
+		}
+			
 		if (len < 4 ||
 			(arg2 != 'serve' && arg2 != 'get' && arg2 != 'build') ||
 			(arg2 == 'get' && len < 5) ||
