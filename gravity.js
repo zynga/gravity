@@ -1,6 +1,6 @@
-/*global Buffer, console, process, require*/
+/*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.0',
+	VERSION = '0.2.1',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -14,17 +14,17 @@ var
 			hostPort
 		;
 
-		if (arg2 == 'version' || arg2 == 'serve' || arg2 == 'build') {
+		if (arg2 === 'version' || arg2 === 'serve' || arg2 === 'build') {
 			console.log('gravity version ' + VERSION);
-			if (arg2 == 'version') {
+			if (arg2 === 'version') {
 				process.exit(0);
 			}
 		}
 			
 		if (len < 4 ||
-			(arg2 != 'serve' && arg2 != 'get' && arg2 != 'build') ||
-			(arg2 == 'get' && len < 5) ||
-			(arg2 == 'build' && len < 5))
+			(arg2 !== 'serve' && arg2 !== 'get' && arg2 !== 'build') ||
+			(arg2 === 'get' && len < 5) ||
+			(arg2 === 'build' && len < 5))
 		{
 			console.log('Usage:');
 			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
@@ -35,10 +35,10 @@ var
 			process.exit(1);
 		}
 
-		args.serve = arg2 == 'serve';
-		args.get = arg2 == 'get';
-		args.build = arg2 == 'build';
-		args.dir = arg3.charAt(slash) == '/' ? arg3.substr(0, slash) : arg3;
+		args.serve = arg2 === 'serve';
+		args.get = arg2 === 'get';
+		args.build = arg2 === 'build';
+		args.dir = arg3.charAt(slash) === '/' ? arg3.substr(0, slash) : arg3;
 
 		if (args.serve) {
 			hostPort = (arg4 || ':').split(':');
@@ -107,7 +107,7 @@ try {
 
 
 function hasExtension(path, ext) {
-	return path.substr(path.length - ext.length) == ext;
+	return path.substr(path.length - ext.length) === ext;
 }
 
 
@@ -126,7 +126,7 @@ function addLineHints(name, content) {
 	;
 	while (++i < len) {
 		out.push(lines[i] +
-			((i % 10 == 9) ? ' //' + name + ':' + (i + 1) + '//' : ''));
+			((i % 10 === 9) ? ' //' + name + ':' + (i + 1) + '//' : ''));
 	}
 	return out.join('\n');
 }
@@ -215,7 +215,7 @@ function reduce(map, path) {
 			if (!suffix) {
 				return { map: mapNode, prefix: prefix, suffix: suffix };
 			}
-			if (typeof mapNode == 'object') {
+			if (typeof mapNode === 'object') {
 				subValue = reduce(mapNode, suffix);
 				if (subValue) {
 					subValue.prefix = prefix + '/' + subValue.prefix;
@@ -259,8 +259,8 @@ function getResource(internal, path, callback, addLineHints) {
 		reducedPrefix = reduced.prefix,
 		reducedSuffix = reduced.suffix,
 		firstChar = path.charAt(0),
-		temporary = firstChar == '~',
-		literal = firstChar == '='
+		temporary = firstChar === '~',
+		literal = firstChar === '='
 	;
 	//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
@@ -278,7 +278,7 @@ function getResource(internal, path, callback, addLineHints) {
 			getFile(path, callback, addLineHints);
 		} else if (reducedMap === true) {
 			getFile(reducedPrefix + '/' + reducedSuffix, callback, addLineHints);
-		} else if (reducedMapType == 'string') {
+		} else if (reducedMapType === 'string') {
 			getFile(reducedMap + '/' + reducedSuffix, callback, addLineHints);
 		} else {
 			callback({ code: 404, message: 'Not Found' });
@@ -291,7 +291,7 @@ function getResource(internal, path, callback, addLineHints) {
 			// A true value means this is just a local file/dir to expose.
 			getFile(reducedPrefix, callback, addLineHints);
 
-		} else if (reducedMapType == 'string') {
+		} else if (reducedMapType === 'string') {
 			// A string value may be a web URL.
 			if (isURL(reducedMap)) {
 				wget(reducedMap, callback);
@@ -300,11 +300,11 @@ function getResource(internal, path, callback, addLineHints) {
 				getResource(true, reducedMap, callback, addLineHints);
 			}
 
-		} else if (reducedMapType == 'array') {
+		} else if (reducedMapType === 'array') {
 			// An array is a list of resources to get packed together.
 			packResources(reducedMap, callback);
 
-		} else if (reducedMapType == 'object') {
+		//} else if (reducedMapType === 'object') {
 			// An object is a directory. We could return a listing...
 			// TODO: Do we really want to support listings?
 
@@ -413,7 +413,7 @@ function runServer() {
 			logURL += '?' + querystring;
 		}
 
-		if (path == 'favicon.ico') {
+		if (path === 'favicon.ico') {
 			return httpError(res, 404, 'Not Found', path, true);
 		}
 
@@ -440,7 +440,7 @@ function runServer() {
 
 			readGravMap();
 
-			if (path == gravMapFileName) {
+			if (path === gravMapFileName) {
 				res.writeHead(200, { 'Content-Type': 'application/json' });
 				res.end(gravMapText);
 				log('200 ' + logURL);
@@ -522,7 +522,7 @@ function runBuild() {
 				reduced = reduce(map, path),
 				reducedMap = reduced.map
 			;
-			outDir += outDir.charAt(outDir.length - 1) != '/' ? '/' : '';
+			outDir += outDir.charAt(outDir.length - 1) !== '/' ? '/' : '';
 			log('buildDir(' + path + ', ' + outDir + ', ...)');
 
 			// Make sure the output dir exists.
@@ -542,7 +542,7 @@ function runBuild() {
 			function queueNode(key, node) {
 				// Determine which action to use for this node.
 				var
-					isString = typeof node == 'string',
+					isString = typeof node === 'string',
 					isDir = isString && !isURL(node) &&
 						fs.statSync(baseDir + '/' + node).isDirectory(),
 					action = isString ?
@@ -561,7 +561,7 @@ function runBuild() {
 			}
 
 			for (key in reducedMap) {
-				if (reducedMap.hasOwnProperty(key) && key.charAt(0) != '~') {
+				if (reducedMap.hasOwnProperty(key) && key.charAt(0) !== '~') {
 					queueNode(key, reducedMap[key]);
 				}
 			}
@@ -574,7 +574,7 @@ function runBuild() {
 				reduced = reduce(map, path),
 				reducedMap = reduced.map,
 				reducedMapType = typeof reducedMap,
-				srcDir = reducedMapType == 'string' ? reducedMap : reduced.prefix,
+				srcDir = reducedMapType === 'string' ? reducedMap : reduced.prefix,
 				command = 'cp -r ' + baseDir + '/' + srcDir + ' ' + dstDir,
 				msg = 'A ' + dstDir + '/[*]'
 			;
