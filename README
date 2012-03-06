@@ -123,3 +123,10 @@ They are useful for inserting one-liner comments or scoping functions, etc.
 		"=}());"
 	]
 }
+
+
+CONVERTING CSS TO JS:
+
+You can include a CSS file in your composition of a JS file.  If you do, the CSS
+will be converted to JavaScript using the style.add() notation:
+https://github-ca.corp.zynga.com/ccampbell/style
