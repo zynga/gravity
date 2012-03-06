@@ -1,6 +1,6 @@
 /*global Buffer, console, process, require*/
 var
-	VERSION = '0.1.0',
+	VERSION = '0.2.0',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -258,11 +258,16 @@ function getResource(internal, path, callback, addLineHints) {
 		reducedMapType = isArray(reducedMap) ? 'array' : typeof reducedMap,
 		reducedPrefix = reduced.prefix,
 		reducedSuffix = reduced.suffix,
-		temporary = path.charAt(0) == '~'
+		firstChar = path.charAt(0),
+		temporary = firstChar == '~',
+		literal = firstChar == '='
 	;
 	//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
-	if (temporary && !internal) {
+	if (literal) {
+		callback(null, new Buffer(path.substr(1) + '\n'));
+
+	} else if (temporary && !internal) {
 		// External request for a temporary resource.
 		callback({ code: 403, message: 'Forbidden' });
 
