@@ -9,7 +9,7 @@ performance from the client perspective (due to fewer http hits to load
 scripts), and potentially simpler integration by the developer integrating your
 component. Gravity was specifically designed to ease this process.
 
-In your code project, define a JSON file called gravity.map:
+In your code project, define a JSON file called `gravity.map`:
 
 	{
 		"final.js": [
@@ -19,7 +19,7 @@ In your code project, define a JSON file called gravity.map:
 		]
 	}
 
-This tells gravity that you want a build product called "final.js", and that it
+This tells gravity that you want a build product called `final.js`, and that it
 should be the result of concatenating various source files (or even other build
 products) together.
 
