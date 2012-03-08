@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.2',
+	VERSION = '0.2.3',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -346,7 +346,8 @@ packResources = function (resources, callback) {
 
 	packer.once(resources, function () {
 		var j = -1, out = [], resource, style, content;
-		out.push(new Buffer('/*\n * ' + resources.join('\n * ') + '\n */\n'));
+		out.push(new Buffer('// ----------\n// Packing:\n// ' +
+			resources.join('\n// ') + '\n// ----------\n'));
 		while (++j < len) {
 			resource = resources[j];
 			content = arguments[j];
@@ -357,8 +358,9 @@ packResources = function (resources, callback) {
 				}
 				content = new Buffer(cssConverter.convert(content + ''));
 			}
-			out.push(new Buffer('\n/* ' + resource + ' */\n'));
+			out.push(new Buffer('\n// Begin ' + resource + '\n'));
 			out.push(content);
+			out.push(new Buffer('\n// End ' + resource + '\n\n'));
 		}
 		if (style) {
 			out.push(new Buffer('\nstyle.noConflict();\n'));
