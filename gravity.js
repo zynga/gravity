@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.4',
+	VERSION = '0.2.5',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -248,6 +248,20 @@ function getFile(path, callback, addLineHints) {
 }
 
 
+function handleDirective(directive, callback) {
+	var licenseText, lines, content;
+	if (directive.indexOf('license=') === 0) {
+		licenseText = fs.readFileSync(directive.substr(8)) + '';
+		lines = licenseText.split('\n');
+		if (lines.length && lines[lines.length - 1] === '') {
+			lines.pop();
+		}
+		content = '/**\n * @license\n * ' + lines.join('\n * ') + '\n */\n';
+		callback(null, new Buffer(content));
+	}
+}
+
+
 // Given a resource path, retrieve the associated content.  Internal requests
 // are always allowed, whereas external requests will only have access to
 // resources explicitly exposed by the gravity map.
@@ -260,11 +274,15 @@ function getResource(internal, path, callback, addLineHints) {
 		reducedSuffix = reduced.suffix,
 		firstChar = path.charAt(0),
 		temporary = firstChar === '~',
-		literal = firstChar === '='
+		literal = firstChar === '=',
+		directive = firstChar === '@'
 	;
 	//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
-	if (literal) {
+	if (directive) {
+		handleDirective(path.substr(1), callback);
+
+	} else if (literal) {
 		callback(null, new Buffer(path.substr(1) + '\n'));
 
 	} else if (temporary && !internal) {
