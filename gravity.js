@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.5',
+	VERSION = '0.2.6',
 
 	// Parse command line args
 	args = (function (argv) {
