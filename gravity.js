@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.7',
+	VERSION = '0.2.8',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -294,8 +294,6 @@ function getResource(internal, path, callback, addLineHints) {
 
 		if (!reducedPrefix && internal) {
 			getFile(path, callback, addLineHints);
-		} else if (reducedMap === true) {
-			getFile(reducedPrefix + '/' + reducedSuffix, callback, addLineHints);
 		} else if (reducedMapType === 'string') {
 			getFile(reducedMap + '/' + reducedSuffix, callback, addLineHints);
 		} else {
@@ -305,8 +303,8 @@ function getResource(internal, path, callback, addLineHints) {
 	} else {
 		// We found an exact match in the map.
 
-		if (reducedMap === true || reducedMap === reducedPrefix) {
-			// A true value means this is just a local file/dir to expose.
+		if (reducedMap === reducedPrefix) {
+			// This is just a local file/dir to expose.
 			getFile(reducedPrefix, callback, addLineHints);
 
 		} else if (reducedMapType === 'string') {
@@ -618,8 +616,8 @@ function runBuild() {
 		},
 
 		fetchContent: function (path, dstPath, done) {
-			//log('fetchContent(' + mapPath + ', ' + dstPath + ', ...)');
 			var msg = 'A ' + dstPath, ext = dstPath.split('.').pop();
+			//log('fetchContent(' + path + ', ' + dstPath + ', ...)');
 			getResource(false, path, function (err, content) {
 				if (err) {
 					buildError('Could not retrieve content for ' + dstPath);
