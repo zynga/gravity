@@ -144,7 +144,7 @@ block comment like this:
 		]
 	}
 
-If the license file looks like this:
+If the LICENSE file looks like this:
 
 	My Product
 	Copyright © 2012 Zynga Inc.
