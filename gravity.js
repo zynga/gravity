@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.2.8',
+	VERSION = '0.2.9',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -27,11 +27,11 @@ var
 			(arg2 === 'build' && len < 5))
 		{
 			console.log('Usage:');
-			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
+			console.log('  gravity build <dir> <outdir>');
 			console.log('    or');
 			console.log('  gravity get <dir> <path>');
 			console.log('    or');
-			console.log('  gravity build <dir> <outdir>');
+			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
 			process.exit(1);
 		}
 
@@ -108,6 +108,15 @@ try {
 
 function hasExtension(path, ext) {
 	return path.substr(path.length - ext.length) === ext;
+}
+
+
+function inArray(arr, value) {
+	for (var i = arr.length; --i >= 0;) {
+		if (arr[i] === value) {
+			return true;
+		}
+	}
 }
 
 
@@ -399,6 +408,8 @@ function runServer() {
 			txt: 'text/plain',
 			xml: 'text/xml'
 		},
+		utf8Types = ['text/css', 'text/html', 'text/javascript',
+			'application/json', 'text/plain', 'text/xml'],
 		serverTries = 0
 	;
 
@@ -481,9 +492,13 @@ function runServer() {
 			var
 				parts = path.split('.'),
 				ext = parts[parts.length - 1],
-				mimeType = mimeTypes[ext] || 'text/plain'
+				mimeType = mimeTypes[ext] || 'text/plain',
+				contentType = mimeType
 			;
-			res.writeHead(200, { 'Content-Type': mimeType });
+			if (inArray(utf8Types, mimeType)) {
+				contentType += '; charset=utf-8';
+			}
+			res.writeHead(200, { 'Content-Type': contentType });
 			res.end(content, 'binary');
 			log('200 ' + logURL);
 		});
