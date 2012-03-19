@@ -1,6 +1,6 @@
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.3.0',
+	VERSION = '0.3.1',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -410,7 +410,8 @@ function runServer() {
 		},
 		utf8Types = ['text/css', 'text/html', 'text/javascript',
 			'application/json', 'text/plain', 'text/xml'],
-		serverTries = 0
+		serverTries = 0,
+		handlePortBindingError
 	;
 
 	function log(msg) {
@@ -426,7 +427,7 @@ function runServer() {
 		}
 	}
 
-	function requestHandler(req, res) {
+	var server = http.createServer(function (req, res) {
 		var
 			parsedURL = url.parse(req.url),
 			slashpath = parsedURL.pathname,
@@ -502,21 +503,36 @@ function runServer() {
 			res.end(content, 'binary');
 			log('200 ' + logURL);
 		});
-	}
+	});
 
-	while (++serverTries < 20) {
+	function tryBindingToPort() {
 		try {
-			http.createServer(requestHandler).listen(serverPort, serverHost);
-			console.log('Gravity server running on http://' + serverHost + ':' +
-				serverPort + '/');
-			break;
+			server.listen(serverPort, serverHost);
 		} catch (ex) {
-			if (serverPort === args.port) {
-				console.log('Port ' + args.port + ' not available.');
-			}
-			serverPort++;
+			handlePortBindingError();
 		}
 	}
+
+	handlePortBindingError = function () {
+		if (serverPort === args.port) {
+			console.log('Port ' + args.port + ' not available.');
+		}
+		if (++serverTries < 20) {
+			serverPort++;
+			tryBindingToPort();
+		} else {
+			console.log('Unable to find a port to bind to.');
+			process.exit(1);
+		}
+	};
+
+	server.on('listening', function () {
+		console.log('Gravity server running on http://' + serverHost + ':' +
+			serverPort + '/');
+	});
+	server.on('error', handlePortBindingError);
+
+	tryBindingToPort();
 }
 
 
