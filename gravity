@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.3.3',
+	VERSION = '0.3.4',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -61,7 +61,7 @@ var
 
 	baseDir = args.dir,
 
-	atom = require('./atom/atom'),
+	atom = require('./submodules/atom/atom'),
 	http = require('http'),
 	url = require('url'),
 	fs = require('fs'),
@@ -74,8 +74,8 @@ var
 	map,
 
 	// Style
-	cssConverter = require('./style/cssConverter'),
-	styleJSFilePath = __dirname + '/style/style.js',
+	cssConverter = require('./submodules/style/cssConverter'),
+	styleJSFilePath = __dirname + '/submodules/style/style.js',
 
 	// Server args
 	defaultHost = '127.0.0.1',

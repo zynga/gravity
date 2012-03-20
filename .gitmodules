@@ -1,0 +1,6 @@
+[submodule "submodules/atom"]
+	path = submodules/atom
+	url = git@github-ca.corp.zynga.com:ccampbell/atom.git
+[submodule "submodules/style"]
+	path = submodules/style
+	url = git@github-ca.corp.zynga.com:ccampbell/style.git
