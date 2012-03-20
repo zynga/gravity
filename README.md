@@ -1,7 +1,5 @@
 OVERVIEW
---------
-
-Gravity.js is a development tool that simplifies working on complex JS projects.
+========
 
 Often when deploying JS components, you want to compile a multitude of source
 files down to a single build result.  The benefits of doing this include faster
@@ -9,7 +7,11 @@ performance from the client perspective (due to fewer http hits to load
 scripts), and potentially simpler integration by the developer integrating your
 component. Gravity was specifically designed to ease this process.
 
-In your code project, define a JSON file called `gravity.map`:
+`gravity` is a command-line tool that reads `gravity.map` files.
+
+A `gravity.map` is a JSON file that can be thought of as a project manifest.  In
+it, you can specify build targets, and the source files that are used to create
+each target.
 
 	{
 		"final.js": [
@@ -24,26 +26,14 @@ should be the result of concatenating various source files (or even other build
 products) together.
 
 
-INSTALLING FROM CODESCRIPTS
----------------------------
-
-The gravity project can just be cloned and run using node:
-
-	node path/to/gravity.js <command> <dir> <args>
-
-However, it's nicer to use when aliased to just `gravity`:
-
-	gravity <command> <dir> <args>
-
-The easiest way to achieve this is to install the codescripts collection:
-https://github-ca.corp.zynga.com/ccampbell/codescripts
-
-
 BASIC COMMANDS
---------------
+==============
 
-During development, then, you can run gravity as a local server that will
-perform on-the-fly concatenation of your source.  In your project dir, run:
+gravity serve
+-------------
+
+During development, you can run gravity as a local server that will perform
+on-the-fly concatenation of your source.  In your project dir, run:
 
 	gravity serve .
 
@@ -55,26 +45,42 @@ itself:
 Now you can visit http://127.0.0.1:1337/final.js to see the results.  Edit a
 source file, then refresh the page to see the change instantly!
 
+If you want your gravity server to bind to a specific host or port, you can
+specify those:
+
+	gravity serve . <host>:<port>
+
+
+gravity build
+-------------
+
 Come build time, run a command like this:
 
 	gravity build . <outdir>
 
 Gravity will take only your build targets and put them into `<outdir>`.
 
+
+gravity get
+-----------
+
 If you just want to see a specific build target, you can do this:
 
 	gravity get . final.js
 
 
-USING TEMPORARY BUILD PRODUCTS
-------------------------------
+GRAVITY MAP SYNTAX / FEATURES
+=============================
+
+Temporary Build Products (~)
+----------------------------
 
 Temporary build products are indicated with a tilde (~) at the beginning of the
-build target name.  They are not part of the final build result, but they can be
-used as inputs to final build products.
+build target name.  They are not part of the final output, but they can be used
+as inputs to final build products.
 
-Use gravity to create localized components.  Assuming you've got localized
-strings in individual files under a `strings` dir, you can define
+For example, use gravity to create localized components.  Assuming you've got
+localized strings in individual files under a `strings` dir, you can define
 locale-specific build targets that make use of an intermediary build target
 containing all of the business logic / UI code, etc.
 
@@ -109,8 +115,8 @@ Now, with a minimum of fuss, you have nice tight bundles of localized JS
 goodness.
 
 
-USING LITERALS
---------------
+Literals (=)
+------------
 
 Literals are strings that get put into the build product verbatim, rather than
 referring to a source file or url.  Literals always begin with an equals sign
@@ -130,8 +136,8 @@ They are useful for inserting one-liner comments or scoping functions, etc.
 	}
 
 
-USING THE @license DIRECTIVE
-----------------------------
+The @license Directive
+----------------------
 
 You can tell gravity to load a text license file and put the contents into a
 block comment like this:
@@ -160,7 +166,7 @@ Then the output will contain this:
 	 */
 
 
-CONVERTING CSS TO JS
+Converting CSS To JS
 --------------------
 
 You can include a CSS file in your composition of a JS file.  If you do, the CSS
