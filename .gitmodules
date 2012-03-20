@@ -1,6 +1,0 @@
-[submodule "atom"]
-	path = atom
-	url = git@github-ca.corp.zynga.com:ccampbell/atom.git
-[submodule "style"]
-	path = style
-	url = git@github-ca.corp.zynga.com:ccampbell/style.git
