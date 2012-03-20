@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.3.2',
+	VERSION = '0.3.3',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -261,7 +261,7 @@ function getFile(path, callback, addLineHints) {
 function handleDirective(directive, callback) {
 	var licenseText, lines, content;
 	if (directive.indexOf('license=') === 0) {
-		licenseText = fs.readFileSync(directive.substr(8)) + '';
+		licenseText = fs.readFileSync(baseDir + '/' + directive.substr(8)) + '';
 		lines = licenseText.split('\n');
 		if (lines.length && lines[lines.length - 1] === '') {
 			lines.pop();
