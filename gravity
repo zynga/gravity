@@ -1,6 +1,7 @@
+#!/usr/bin/env node
 /*global __dirname, Buffer, console, process, require*/
 var
-	VERSION = '0.3.1',
+	VERSION = '0.3.2',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -20,7 +21,7 @@ var
 				process.exit(0);
 			}
 		}
-			
+
 		if (len < 4 ||
 			(arg2 !== 'serve' && arg2 !== 'get' && arg2 !== 'build') ||
 			(arg2 === 'get' && len < 5) ||
