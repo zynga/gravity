@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /*global __dirname, Buffer, console, process, require*/
+/* vim: set syntax=javascript: */
 var
 	VERSION = '0.3.3',
 
