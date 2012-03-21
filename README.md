@@ -22,7 +22,7 @@ each target.
 	}
 
 This tells gravity that you want a build product called `final.js`, and that it
-should be the result of concatenating various source files (or even other build
+should be the result of compiling various source files (or even other build
 products) together.
 
 
@@ -60,6 +60,10 @@ Come build time, run a command like this:
 
 Gravity will take only your build targets and put them into `<outdir>`.
 
+If you want to apply code minification, use the `--minify` argument:
+
+	gravity build --minify . <outdir>
+
 
 gravity get
 -----------
@@ -67,6 +71,10 @@ gravity get
 If you just want to see a specific build target, you can do this:
 
 	gravity get . final.js
+
+Or, with minification:
+
+	gravity get --minify . final.js
 
 
 GRAVITY MAP SYNTAX / FEATURES
@@ -158,7 +166,7 @@ If the LICENSE file looks like this:
 
 Then the output will contain this:
 
-	/**
+	/*!
 	 * @license
 	 * My Product
 	 * Copyright © 2012 Zynga Inc.

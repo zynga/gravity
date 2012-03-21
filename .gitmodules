@@ -4,3 +4,6 @@
 [submodule "submodules/style"]
 	path = submodules/style
 	url = git@github-ca.corp.zynga.com:ccampbell/style.git
+[submodule "submodules/UglifyJS"]
+	path = submodules/UglifyJS
+	url = https://github.com/mishoo/UglifyJS.git

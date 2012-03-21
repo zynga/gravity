@@ -2,31 +2,35 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.3.4',
+	VERSION = '0.3.5',
 
 	// Parse command line args
 	args = (function (argv) {
 		var
 			len = argv.length,
-			arg2 = len > 2 && argv[2],
+			command = len > 2 && argv[2],
 			arg3 = len > 3 && argv[3],
 			arg4 = len > 4 && argv[4],
-			slash = arg3 && (arg3.length - 1),
+			arg5 = len > 5 && argv[5],
+			lastArg = arg5 || arg4,
+			minify = arg3 === '--minify',
+			dir = minify ? arg4 : arg3,
+			slash = dir && (dir.length - 1),
 			args = {},
 			hostPort
 		;
 
-		if (arg2 === 'version' || arg2 === 'serve' || arg2 === 'build') {
+		if (command === 'version' || command === 'serve' || command === 'build') {
 			console.log('gravity version ' + VERSION);
-			if (arg2 === 'version') {
+			if (command === 'version') {
 				process.exit(0);
 			}
 		}
 
 		if (len < 4 ||
-			(arg2 !== 'serve' && arg2 !== 'get' && arg2 !== 'build') ||
-			(arg2 === 'get' && len < 5) ||
-			(arg2 === 'build' && len < 5))
+			(command !== 'serve' && command !== 'get' && command !== 'build') ||
+			(command === 'get' && len < 5) ||
+			(command === 'build' && len < 5))
 		{
 			console.log('Usage:');
 			console.log('  gravity build <dir> <outdir>');
@@ -37,23 +41,24 @@ var
 			process.exit(1);
 		}
 
-		args.serve = arg2 === 'serve';
-		args.get = arg2 === 'get';
-		args.build = arg2 === 'build';
-		args.dir = arg3.charAt(slash) === '/' ? arg3.substr(0, slash) : arg3;
+		args.serve = command === 'serve';
+		args.get = command === 'get';
+		args.build = command === 'build';
+		args.minify = minify;
+		args.dir = dir.charAt(slash) === '/' ? dir.substr(0, slash) : dir;
 
 		if (args.serve) {
-			hostPort = (arg4 || ':').split(':');
+			hostPort = (lastArg || ':').split(':');
 			args.host = hostPort[0];
 			args.port = hostPort[1];
 		}
 
 		if (args.get) {
-			args.path = arg4;
+			args.path = lastArg;
 		}
 
 		if (args.build) {
-			args.outDir = arg4;
+			args.outDir = lastArg;
 		}
 
 		return args;
@@ -76,6 +81,9 @@ var
 	// Style
 	cssConverter = require('./submodules/style/cssConverter'),
 	styleJSFilePath = __dirname + '/submodules/style/style.js',
+
+	// Uglify
+	uglify = require('./submodules/UglifyJS/uglify-js'),
 
 	// Server args
 	defaultHost = '127.0.0.1',
@@ -267,7 +275,7 @@ function handleDirective(directive, callback) {
 		if (lines.length && lines[lines.length - 1] === '') {
 			lines.pop();
 		}
-		content = '/**\n * @license\n * ' + lines.join('\n * ') + '\n */\n';
+		content = '/*!\n * @license\n * ' + lines.join('\n * ') + '\n */\n';
 		callback(null, new Buffer(content));
 	}
 }
@@ -546,6 +554,9 @@ if (args.serve) {
 if (args.get) {
 	getResource(false, args.path, function (err, content) {
 		if (content) {
+			if (args.minify && hasExtension(args.path, '.js')) {
+				content = uglify(content + '');
+			}
 			console.log(content + '');
 		}
 	});
@@ -662,6 +673,9 @@ function runBuild() {
 					fs.open(dstPath, 'w', function (err, fd) {
 						if (err) {
 							buildError('Could not open file for writing: ' + dstPath);
+						}
+						if (args.minify && hasExtension(dstPath, '.js')) {
+							content = new Buffer(uglify(content + ''));
 						}
 						try {
 							fs.write(fd, content, 0, content.length, 0,
