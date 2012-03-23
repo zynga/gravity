@@ -26,6 +26,23 @@ should be the result of compiling various source files (or even other build
 products) together.
 
 
+INSTALLATION
+============
+
+Prerequisites:
+ * `node`
+ * `git` 1.7 or greater
+
+	mkdir ~/git
+	cd ~/git
+	git clone git@github-ca.corp.zynga.com:ccampbell/gravity.git
+	cd gravity
+	git submodule update --init
+
+Of course you can check it out wherever you like.  Just make sure you add the
+gravity dir (in this example ~/git/gravity) to your path.
+
+
 BASIC COMMANDS
 ==============
 
