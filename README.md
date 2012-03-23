@@ -34,6 +34,8 @@ Prerequisites:
  - node
  - git 1.7 or greater
 
+To install to ~/git/gravity
+
 	mkdir ~/git
 	cd ~/git
 	git clone git@github-ca.corp.zynga.com:ccampbell/gravity.git
@@ -51,7 +53,8 @@ gravity serve
 -------------
 
 During development, you can run gravity as a local server that will perform
-on-the-fly concatenation of your source.  In your project dir, run:
+on-the-fly concatenation of your source.  In your project's directory (ie.,
+wherever the gravity.map file is), run:
 
 	gravity serve .
 
