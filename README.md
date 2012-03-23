@@ -26,6 +26,26 @@ should be the result of compiling various source files (or even other build
 products) together.
 
 
+INSTALLATION
+============
+
+Prerequisites:
+
+ - node
+ - git 1.7 or greater
+
+To install to ~/git/gravity
+
+	mkdir ~/git
+	cd ~/git
+	git clone git@github-ca.corp.zynga.com:ccampbell/gravity.git
+	cd gravity
+	git submodule update --init
+
+Of course you can check it out wherever you like.  Just make sure you add the
+gravity dir (in this example ~/git/gravity) to your path.
+
+
 BASIC COMMANDS
 ==============
 
@@ -33,7 +53,8 @@ gravity serve
 -------------
 
 During development, you can run gravity as a local server that will perform
-on-the-fly concatenation of your source.  In your project dir, run:
+on-the-fly concatenation of your source.  In your project's directory (ie.,
+wherever the gravity.map file is), run:
 
 	gravity serve .
 
