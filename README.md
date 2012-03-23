@@ -30,8 +30,8 @@ INSTALLATION
 ============
 
 Prerequisites:
- * `node`
- * `git` 1.7 or greater
+ - node
+ - git 1.7 or greater
 
 	mkdir ~/git
 	cd ~/git
