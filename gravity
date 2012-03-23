@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.3.6',
+	VERSION = '0.3.7',
 
 	// Parse command line args
 	args = (function (argv) {
