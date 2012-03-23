@@ -30,6 +30,7 @@ INSTALLATION
 ============
 
 Prerequisites:
+
  - node
  - git 1.7 or greater
 
