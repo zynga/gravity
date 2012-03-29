@@ -7,3 +7,6 @@
 [submodule "submodules/UglifyJS"]
 	path = submodules/UglifyJS
 	url = https://github.com/mishoo/UglifyJS.git
+[submodule "submodules/Uglify-kennethkufluk"]
+	path = submodules/Uglify-kennethkufluk
+	url = https://github.com/kennethkufluk/UglifyJS.git
