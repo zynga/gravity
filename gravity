@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.4.0',
+	VERSION = '0.4.1',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -254,7 +254,7 @@ function getFile(path, callback, addLineHints) {
 	//console.log('getFile(' + filePath + ')');
 	fs.stat(filePath, function (err, stat) {
 		if (err || stat.isDirectory()) {
-			callback({ code: 404, message: 'Not Found' });
+			callback({ code: 404, message: 'Not Found: ' + path });
 		} else {
 			fs.readFile(filePath, function (err, content) {
 				callback(
