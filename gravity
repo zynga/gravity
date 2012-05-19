@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.4.2',
+	VERSION = '0.4.3',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -77,10 +77,6 @@ var
 	gravMapFilePath = baseDir + '/' + gravMapFileName,
 	gravMapText,
 	map,
-
-	// Style
-	cssConverter = require('./submodules/style/cssConverter'),
-	styleJSFilePath = __dirname + '/submodules/style/style.js',
 
 	// Uglify
 	//uglify = require('./submodules/UglifyJS/uglify-js'),
@@ -381,25 +377,14 @@ packResources = function (resources, callback) {
 	}
 
 	packer.once(resources, function () {
-		var j = -1, out = [], resource, style, content;
+		var j = -1, out = [], resource;
 		out.push(new Buffer('// ----------\n// Packing:\n// ' +
 			resources.join('\n// ') + '\n// ----------\n'));
 		while (++j < len) {
 			resource = resources[j];
-			content = arguments[j];
-			if (hasExtension(resource, '.css')) {
-				if (!style) {
-					out.push(new Buffer(fs.readFileSync(styleJSFilePath) + ''));
-					style = true;
-				}
-				content = new Buffer(cssConverter.convert(content + ''));
-			}
 			out.push(new Buffer('\n// Begin ' + resource + '\n'));
-			out.push(content);
+			out.push(arguments[j]);
 			out.push(new Buffer('\n// End ' + resource + '\n\n'));
-		}
-		if (style) {
-			out.push(new Buffer('\nstyle.noConflict();\n'));
 		}
 		callback(null, joinBuffers(out));
 	});

@@ -94,20 +94,3 @@ Then the output will contain this:
 	 * Author: me
 	 */
 
-
-Converting CSS To JS
---------------------
-
-You can include a CSS file in your composition of a JS file.  If you do, the CSS
-will be converted to JavaScript using the style.add() notation:
-https://github-ca.corp.zynga.com/ccampbell/style
-
-	{
-		"ui.js": {
-			"widgets.css",
-			"widgets.js"
-		}
-	}
-
-* Note that this does NOT yet handle CSS containing @import or relative image
-URLs.
