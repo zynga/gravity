@@ -74,10 +74,6 @@ var
 	gravMapText,
 	map,
 
-	// Uglify
-	//uglify = require('./submodules/UglifyJS/uglify-js'),
-	uglify = require('./submodules/Uglify-kennethkufluk/uglify-js'),
-
 	// Server args
 	defaultHost = '127.0.0.1',
 	defaultPort = 1337,
