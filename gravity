@@ -75,7 +75,7 @@ var
 	// Gravity Map
 	gravMapFileName = 'gravity.map',
 	gravMapFilePath = baseDir + '/' + gravMapFileName,
-	gravMapText,
+	gravMapJSON,
 	map,
 
 	// Uglify
@@ -99,9 +99,26 @@ var
 ;
 
 
+function stripOutComments(text) {
+	var
+		line,
+		lines = text.split('\n'),
+		i = -1,
+		len = lines.length,
+		out = []
+	;
+	while (++i < len) {
+		line = lines[i];
+		if (!line.match(/^\s*\/\//)) {
+			out.push(line);
+		}
+	}
+	return out.join('\n');
+}
+
 function readGravMap() {
-	gravMapText = fs.readFileSync(gravMapFilePath) + '';
-	map = JSON.parse(gravMapText);
+	gravMapJSON = stripOutComments(fs.readFileSync(gravMapFilePath) + '');
+	map = JSON.parse(gravMapJSON);
 }
 
 
@@ -468,7 +485,7 @@ function runServer() {
 
 			if (path === gravMapFileName) {
 				res.writeHead(200, { 'Content-Type': 'application/json' });
-				res.end(gravMapText);
+				res.end(gravMapJSON);
 				log('200 ' + logURL);
 				return;
 			}
