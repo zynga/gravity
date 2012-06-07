@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.5.1',
+	VERSION = '0.5.2',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -44,7 +44,7 @@ var
 		args.dir = dir.charAt(slash) === '/' ? dir.substr(0, slash) : dir;
 
 		if (args.serve) {
-			hostPort = (lastArg || ':').split(':');
+			hostPort = (arg4 || ':').split(':');
 			args.host = hostPort[0];
 			args.port = hostPort[1];
 		}
@@ -547,7 +547,11 @@ if (args.serve) {
 
 
 if (args.get) {
-	getResource(false, args.path);
+	getResource(false, args.path, function (err, content) {
+		if (content) {
+			console.log(content + '');
+		}
+	});
 }
 
 
