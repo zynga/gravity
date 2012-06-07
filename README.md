@@ -81,10 +81,6 @@ Come build time, run a command like this:
 
 Gravity will take only your build targets and put them into `<outdir>`.
 
-If you want to apply code minification, use the `--minify` argument:
-
-	gravity build --minify . <outdir>
-
 
 gravity get
 -----------
@@ -92,10 +88,6 @@ gravity get
 If you just want to see a specific build target, you can do this:
 
 	gravity get . final.js
-
-Or, with minification:
-
-	gravity get --minify . final.js
 
 
 MORE DOCUMENTATION
