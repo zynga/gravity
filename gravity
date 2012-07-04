@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.5.2',
+	VERSION = '0.5.3',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -237,7 +237,7 @@ function reduce(map, path) {
 		suffix = split[1];
 		mapNode = map[prefix];
 		if (mapNode) {
-			if (!suffix) {
+			if (!suffix || typeof mapNode === 'string') {
 				return { map: mapNode, prefix: prefix, suffix: suffix };
 			}
 			if (typeof mapNode === 'object') {
