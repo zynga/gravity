@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.5.3',
+	VERSION = '0.5.4',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -419,8 +419,22 @@ function runServer() {
 		handlePortBindingError
 	;
 
+	function pad2(num) {
+		return (num + 101 + '').substr(1);
+	}
+
+	function timestamp() {
+		var
+			d = new Date(),
+			day = [d.getFullYear(), pad2(d.getMonth()), d.getDate()].join('-'),
+			time = [pad2(d.getHours()), pad2(d.getMinutes()),
+				pad2(d.getSeconds())].join(':')
+		;
+		return day + ' ' + time;
+	}
+
 	function log(msg) {
-		console.log(new Date() + ' ' + msg);
+		console.log(timestamp() + ' [:' + serverPort + '] ' + msg);
 	}
 
 	function httpError(res, code, msg, fileName, suppressLog) {
