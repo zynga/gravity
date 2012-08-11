@@ -63,34 +63,3 @@ They are useful for inserting one-liner comments or scoping functions, etc.
 			"=}());"
 		]
 	}
-
-
-The @license Directive
-----------------------
-
-You can tell gravity to load a text license file and put the contents into a
-block comment like this:
-
-	{
-		"myProduct.js": [
-			"@license=LICENSE",
-			"src/1.js",
-			...
-		]
-	}
-
-If the LICENSE file looks like this:
-
-	My Product
-	Copyright © 2012 Zynga Inc.
-	Author: me
-
-Then the output will contain this:
-
-	/*!
-	 * @license
-	 * My Product
-	 * Copyright © 2012 Zynga Inc.
-	 * Author: me
-	 */
-

@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.5.5',
+	gravity = require('./gravity.js'),
 
 	// Parse command line args
 	args = (function (argv) {
@@ -18,7 +18,7 @@ var
 		;
 
 		if (command === 'version' || command === 'serve' || command === 'build') {
-			console.log('gravity version ' + VERSION);
+			console.log('gravity version ' + gravity.VERSION);
 			if (command === 'version') {
 				process.exit(0);
 			}
@@ -91,31 +91,10 @@ var
 ;
 
 
-function stripOutComments(text) {
-	var
-		line,
-		lines = text.split('\n'),
-		i = -1,
-		len = lines.length,
-		out = []
-	;
-	while (++i < len) {
-		line = lines[i];
-		if (!line.match(/^\s*\/\//)) {
-			out.push(line);
-		}
-	}
-	return out.join('\n');
-}
-
-function readGravMap() {
-	gravMapJSON = stripOutComments(fs.readFileSync(gravMapFilePath) + '');
-	map = JSON.parse(gravMapJSON);
-}
-
-
 try {
-	readGravMap();
+	gravity.map(gravMapFilePath, function (result) {
+		map = result;
+	});
 } catch (ex) {
 	console.log('Gravity: no map found at ' + gravMapFilePath);
 	process.exit(1);
@@ -273,20 +252,6 @@ function getFile(path, callback, addLineHints) {
 }
 
 
-function handleDirective(directive, callback) {
-	var licenseText, lines, content;
-	if (directive.indexOf('license=') === 0) {
-		licenseText = fs.readFileSync(baseDir + '/' + directive.substr(8)) + '';
-		lines = licenseText.split('\n');
-		if (lines.length && lines[lines.length - 1] === '') {
-			lines.pop();
-		}
-		content = '/*!\n * @license\n * ' + lines.join('\n * ') + '\n */\n';
-		callback(null, new Buffer(content));
-	}
-}
-
-
 // Given a resource path, retrieve the associated content.  Internal requests
 // are always allowed, whereas external requests will only have access to
 // resources explicitly exposed by the gravity map.
@@ -299,15 +264,11 @@ function getResource(internal, path, callback, addLineHints) {
 		reducedSuffix = reduced.suffix,
 		firstChar = path.charAt(0),
 		temporary = firstChar === '~',
-		literal = firstChar === '=',
-		directive = firstChar === '@'
+		literal = firstChar === '='
 	;
 	//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
-	if (directive) {
-		handleDirective(path.substr(1), callback);
-
-	} else if (literal) {
+	if (literal) {
 		callback(null, new Buffer(path.substr(1) + '\n'));
 
 	} else if (temporary && !internal) {
@@ -487,7 +448,9 @@ function runServer() {
 
 		} else {
 
-			readGravMap();
+			gravity.map(gravMapFilePath, function (result) {
+				map = result;
+			});
 
 			if (path === gravMapFileName) {
 				res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -561,6 +524,7 @@ if (args.serve) {
 
 
 if (args.get) {
+	//gravity.pull(map, baseDir, args.path, function (err, content) {
 	getResource(false, args.path, function (err, content) {
 		if (content) {
 			console.log(content + '');
