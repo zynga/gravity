@@ -2,7 +2,7 @@
 /*global __dirname, Buffer, console, process, require*/
 /* vim: set syntax=javascript: */
 var
-	VERSION = '0.5.4',
+	VERSION = '0.5.5',
 
 	// Parse command line args
 	args = (function (argv) {
@@ -62,7 +62,7 @@ var
 
 	baseDir = args.dir,
 
-	atom = require('./submodules/atom/atom'),
+	atom = require('./atom/atom'),
 	http = require('http'),
 	url = require('url'),
 	fs = require('fs'),
