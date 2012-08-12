@@ -22,20 +22,26 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.1';
+	gravity.VERSION = '0.6.2';
 
 	var
 		atom = require('./atom/atom'),
 		http = require('http'),
 		url = require('url'),
 		fs = require('fs'),
-
-		// Functions
-		isArray = Array.isArray || function (obj) {
-			return Object.prototype.toString.call(obj) === '[object Array]';
-		},
 		packResources
 	;
+
+	var isArray = Array.isArray || function (obj) {
+		return Object.prototype.toString.call(obj) === '[object Array]';
+	};
+	function inArray(arr, value) {
+		for (var i = arr.length; --i >= 0;) {
+			if (arr[i] === value) {
+				return true;
+			}
+		}
+	}
 
 	function hasExtension(path, ext) {
 		return path.substr(path.length - ext.length) === ext;
@@ -308,19 +314,163 @@
 		return out.join('\n');
 	}
 
+	function runServer(mapURI, base, host, preferredPort) {
+		var
+			mimeTypes = {
+				css: 'text/css',
+				html: 'text/html',
+				jpg: 'image/jpeg',
+				jpeg: 'image/jpeg',
+				js: 'text/javascript',
+				json: 'application/json',
+				png: 'image/png',
+				txt: 'text/plain',
+				xml: 'text/xml'
+			},
+			port = preferredPort,
+			serverTries = 0,
+			utf8Types = ['text/css', 'text/html', 'text/javascript',
+				'application/json', 'text/plain', 'text/xml'],
+			handlePortBindingError
+		;
+
+		function pad2(num) {
+			return (num + 101 + '').substr(1);
+		}
+
+		function timestamp() {
+			var
+				d = new Date(),
+				day = [d.getFullYear(), pad2(d.getMonth()), d.getDate()].join('-'),
+				time = [pad2(d.getHours()), pad2(d.getMinutes()),
+					pad2(d.getSeconds())].join(':')
+			;
+			return day + ' ' + time;
+		}
+
+		function log(msg) {
+			console.log(timestamp() + ' [:' + port + '] ' + msg);
+		}
+
+		function httpError(res, code, msg, fileName, suppressLog) {
+			res.writeHead(code);
+			msg = code + ' ' + msg + ': ' + fileName;
+			res.end(msg);
+			if (!suppressLog) {
+				log(msg);
+			}
+		}
+
+		var server = http.createServer(function (req, res) {
+			var
+				parsedURL = url.parse(req.url),
+				slashpath = parsedURL.pathname,
+				query = url.parse(req.url, true).query,
+				querystring = parsedURL.query,
+				path = slashpath.substr(1),
+				dotparts = path.split('.'),
+				ext = dotparts.pop(),
+				reqAtom = atom.create(),
+				logURL = slashpath
+			;
+			if (querystring) {
+				logURL += '?' + querystring;
+			}
+
+			if (path === 'favicon.ico') {
+				return httpError(res, 404, 'Not Found', path, true);
+			}
+
+			if (path === '' && !querystring) {
+				res.writeHead(302, { 'Location': '/gravity.map' });
+				res.end();
+				return;
+			}
+
+			gravity.map(mapURI, function (result) {
+				reqAtom.set('map', result);
+			});
+
+			if (path === 'gravity.map') {
+				reqAtom.once('map', function (map) {
+					res.writeHead(200, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify(map));
+					log('200 ' + logURL);
+				});
+				return;
+			}
+
+			// Fetch content for target file
+			reqAtom.once('map', function (map) {
+				gravity.pull(map, base, path, function (err, content) {
+					if (err) {
+						return httpError(res, err.code, err.message, path);
+					}
+					reqAtom.set('content', content);
+				});
+			});
+
+			reqAtom.once('content', function (content) {
+				// Return the file contents.
+				var
+					parts = path.split('.'),
+					ext = parts[parts.length - 1],
+					mimeType = mimeTypes[ext] || 'text/plain',
+					contentType = mimeType
+				;
+				if (inArray(utf8Types, mimeType)) {
+					contentType += '; charset=utf-8';
+				}
+				res.writeHead(200, { 'Content-Type': contentType });
+				res.end(content, 'binary');
+				log('200 ' + logURL);
+			});
+		});
+
+		function tryBindingToPort() {
+			try {
+				server.listen(port, host);
+			} catch (ex) {
+				handlePortBindingError();
+			}
+		}
+
+		handlePortBindingError = function () {
+			if (port === preferredPort) {
+				console.log('Port ' + preferredPort + ' not available.');
+			}
+			if (++serverTries < 20) {
+				port++;
+				tryBindingToPort();
+			} else {
+				console.log('Unable to find a port to bind to.');
+				process.exit(1);
+			}
+		};
+
+		server.on('listening', function () {
+			console.log('Gravity server running on http://' + host + ':' +
+				port + '/');
+		});
+		server.on('error', handlePortBindingError);
+
+		tryBindingToPort();
+	}
+
 	gravity.list = function (map, base, callback) {
 	};
 
-	gravity.map = function (uri, callback) {
-		var gravMapJSON = stripComments(fs.readFileSync(uri) + '');
+	gravity.map = function (mapURI, callback) {
+		var gravMapJSON = stripComments(fs.readFileSync(mapURI) + '');
 		callback(JSON.parse(gravMapJSON));
 	};
 
-	gravity.pull = function (map, base, path, callback) {
-		getResource(map, base, false, path, callback);
+	gravity.pull = function (mapOrURI, base, path, callback) {
+		getResource(mapOrURI, base, false, path, callback);
 	};
 
-	gravity.serve = function (map, base, host, port) {
+	gravity.serve = function (mapURI, base, host, port) {
+		runServer(mapURI, base, host, port);
 	};
 
 }());
