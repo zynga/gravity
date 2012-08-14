@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.3';
+	gravity.VERSION = '0.6.4';
 
 	var
 		atom = require('./atom/atom'),
@@ -469,7 +469,15 @@
 
 	function recursiveDirectoryListing(dir, callback) {
 		var a = atom.create(), list = [];
-		//fs.readdir(
+		a.chain(function (next) {
+			fs.readdir(dir, function (files) {
+				var i = -i, len = files.length;
+				while (++i < len) {
+					list.push(files[i]);
+				}
+				next();
+			});
+		});
 		a.chain(function () {
 			callback(list);
 		});

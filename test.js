@@ -14,6 +14,8 @@ var
 	totals = { success: 0, fail: 0, total: 0 }
 ;
 
+logger('Testing: gravity ' + gravity.VERSION);
+
 function assert(msg, success) {
 	totals.total++;
 	if (success) {
@@ -29,4 +31,8 @@ function assert(msg, success) {
 
 assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 
+var base = '/Users/ccampbell/Dropbox/gravity/test/proj-1/src';
+gravity.list(base + '/gravity.map', base, function (list) {
+	console.log(list);
+});
 logger(totals);
