@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.4';
+	gravity.VERSION = '0.6.5';
 
 	var
 		atom = require('./atom/atom'),
@@ -470,8 +470,8 @@
 	function recursiveDirectoryListing(dir, callback) {
 		var a = atom.create(), list = [];
 		a.chain(function (next) {
-			fs.readdir(dir, function (files) {
-				var i = -i, len = files.length;
+			fs.readdir(dir, function (err, files) {
+				var i = -1, len = files.length;
 				while (++i < len) {
 					list.push(files[i]);
 				}
@@ -487,12 +487,12 @@
 		var a = atom.create(), list = [];
 		eachMapProperty(mapNode, function (prop, val, type, isDir) {
 			a.chain(function (next) {
-				var pathProp = (base ? (base + '/') : '') + prop;
+				var pathProp = (path ? (path + '/') : '') + prop;
 
 				function handleSublist(sublist) {
 					var i = -1, len = sublist.length;
 					while (++i < len) {
-						list.push(pathProp + '/' + sublist[i]);
+						list.push(pathProp + sublist[i]);
 					}
 					next();
 				}

@@ -1,1 +1,1 @@
-var b = 'bar';
+var two = 2;

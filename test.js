@@ -31,8 +31,15 @@ function assert(msg, success) {
 
 assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 
-var base = '/Users/ccampbell/Dropbox/gravity/test/proj-1/src';
-gravity.list(base + '/gravity.map', base, function (list) {
-	console.log(list);
+a.chain(function (next) {
+	var base = '/Users/ccampbell/Dropbox/gravity/test/proj-1/src';
+	gravity.list(base + '/gravity.map', base, function (list) {
+		console.log(list);
+		assert('Thers 2 things!', list.length === 2);
+		next();
+	});
 });
-logger(totals);
+
+a.chain(function () {
+	logger(totals);
+});

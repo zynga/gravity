@@ -1,6 +1,8 @@
 {
 	"out.js": [
 		"1.js",
-		"subdir/2.js"
-	]
+		"subdir/2.js",
+		"subdir/subsubdir/3.js"
+	],
+	"subdir/": "subdir"
 }
