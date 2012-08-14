@@ -1,4 +1,4 @@
-/*global Buffer, global, module, require*/
+/*global Buffer, global, module, process, require*/
 (function () {
 
 	// Make a module
@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.2';
+	gravity.VERSION = '0.6.3';
 
 	var
 		atom = require('./atom/atom'),
@@ -43,8 +43,10 @@
 		}
 	}
 
-	function hasExtension(path, ext) {
-		return path.substr(path.length - ext.length) === ext;
+	function endsWith(longStr, shortStr) {
+		var longLen = longStr.length, shortLen = shortStr.length;
+		return (longLen >= shortLen) &&
+			(longStr.substr(longLen - shortLen) === shortStr);
 	}
 
 	function isURL(str) {
@@ -178,12 +180,17 @@
 				fs.readFile(filePath, function (err, content) {
 					callback(
 						err ? { code: 500, message: 'Internal error' } : null,
-						(addLineHints && hasExtension(filePath, '.js')) ?
+						(addLineHints && endsWith(filePath, '.js')) ?
 							new Buffer(addLineHints(path, content + '')) : content
 					);
 				});
 			}
 		});
+	}
+
+
+	function nodeType(mapNode) {
+		return isArray(mapNode) ? 'array' : typeof mapNode;
 	}
 
 
@@ -194,7 +201,7 @@
 		var
 			reduced = reduce(map, path),
 			reducedMap = reduced.map,
-			reducedMapType = isArray(reducedMap) ? 'array' : typeof reducedMap,
+			reducedMapType = nodeType(reducedMap),
 			reducedPrefix = reduced.prefix,
 			reducedSuffix = reduced.suffix,
 			firstChar = path.charAt(0),
@@ -381,17 +388,11 @@
 				return httpError(res, 404, 'Not Found', path, true);
 			}
 
-			if (path === '' && !querystring) {
-				res.writeHead(302, { 'Location': '/gravity.map' });
-				res.end();
-				return;
-			}
-
 			gravity.map(mapURI, function (result) {
 				reqAtom.set('map', result);
 			});
 
-			if (path === 'gravity.map') {
+			if (path === '') {
 				reqAtom.once('map', function (map) {
 					res.writeHead(200, { 'Content-Type': 'application/json' });
 					res.end(JSON.stringify(map));
@@ -457,16 +458,72 @@
 		tryBindingToPort();
 	}
 
-	gravity.list = function (map, base, callback) {
+	function eachMapProperty(map, callback) {
+		for (var p in map) {
+			if (map.hasOwnProperty(p)) {
+				var node = map[p];
+				callback(p, node, nodeType(node), endsWith(p, '/'));
+			}
+		}
+	}
+
+	function recursiveDirectoryListing(dir, callback) {
+		var a = atom.create(), list = [];
+		//fs.readdir(
+		a.chain(function () {
+			callback(list);
+		});
+	}
+
+	function getList(base, path, mapNode, callback) {
+		var a = atom.create(), list = [];
+		eachMapProperty(mapNode, function (prop, val, type, isDir) {
+			a.chain(function (next) {
+				var pathProp = (base ? (base + '/') : '') + prop;
+
+				function handleSublist(sublist) {
+					var i = -1, len = sublist.length;
+					while (++i < len) {
+						list.push(pathProp + '/' + sublist[i]);
+					}
+					next();
+				}
+
+				if (type === 'object') {
+					getList(base, pathProp, val, handleSublist);
+				} else if (isDir) {
+					// Use fs to list directory contents
+					recursiveDirectoryListing(base + '/' + val, handleSublist);
+				} else {
+					list.push(pathProp);
+					next();
+				}
+			});
+		});
+		a.chain(function () {
+			callback(list);
+		});
+	}
+
+	gravity.list = function (mapOrURI, base, callback) {
+		gravity.map(mapOrURI, function (map) {
+			getList(base, '', map, callback);
+		});
 	};
 
-	gravity.map = function (mapURI, callback) {
-		var gravMapJSON = stripComments(fs.readFileSync(mapURI) + '');
-		callback(JSON.parse(gravMapJSON));
+	gravity.map = function (mapOrURI, callback) {
+		if (typeof mapOrURI === 'string') {
+			var gravMapJSON = stripComments(fs.readFileSync(mapOrURI) + '');
+			callback(JSON.parse(gravMapJSON));
+		} else {
+			callback(mapOrURI);
+		}
 	};
 
 	gravity.pull = function (mapOrURI, base, path, callback) {
-		getResource(mapOrURI, base, false, path, callback);
+		gravity.map(mapOrURI, function (map) {
+			getResource(map, base, false, path, callback);
+		});
 	};
 
 	gravity.serve = function (mapURI, base, host, port) {
