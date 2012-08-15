@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.5';
+	gravity.VERSION = '0.6.6';
 
 	var
 		atom = require('./atom/atom'),
@@ -31,6 +31,8 @@
 		fs = require('fs'),
 		packResources
 	;
+
+	// Private functions
 
 	var isArray = Array.isArray || function (obj) {
 		return Object.prototype.toString.call(obj) === '[object Array]';
@@ -377,7 +379,7 @@
 				path = slashpath.substr(1),
 				dotparts = path.split('.'),
 				ext = dotparts.pop(),
-				reqAtom = atom.create(),
+				request = atom.create(),
 				logURL = slashpath
 			;
 			if (querystring) {
@@ -389,11 +391,11 @@
 			}
 
 			gravity.map(mapURI, function (result) {
-				reqAtom.set('map', result);
+				request.set('map', result);
 			});
 
 			if (path === '') {
-				reqAtom.once('map', function (map) {
+				request.once('map', function (map) {
 					res.writeHead(200, { 'Content-Type': 'application/json' });
 					res.end(JSON.stringify(map));
 					log('200 ' + logURL);
@@ -402,16 +404,16 @@
 			}
 
 			// Fetch content for target file
-			reqAtom.once('map', function (map) {
+			request.once('map', function (map) {
 				gravity.pull(map, base, path, function (err, content) {
 					if (err) {
 						return httpError(res, err.code, err.message, path);
 					}
-					reqAtom.set('content', content);
+					request.set('content', content);
 				});
 			});
 
-			reqAtom.once('content', function (content) {
+			request.once('content', function (content) {
 				// Return the file contents.
 				var
 					parts = path.split('.'),
@@ -458,6 +460,13 @@
 		tryBindingToPort();
 	}
 
+	function arrayEach(arr, callback) {
+		var i = -1, len = arr && arr.length;
+		while (++i < len) {
+			callback(i, arr[i]);
+		}
+	}
+
 	function eachMapProperty(map, callback) {
 		for (var p in map) {
 			if (map.hasOwnProperty(p)) {
@@ -471,11 +480,23 @@
 		var a = atom.create(), list = [];
 		a.chain(function (next) {
 			fs.readdir(dir, function (err, files) {
-				var i = -1, len = files.length;
-				while (++i < len) {
-					list.push(files[i]);
-				}
-				next();
+				arrayEach(files, function (i, file) {
+					var subPath = dir + '/' + file;
+					fs.stat(subPath, function (err, stats) {
+						if (stats.isDirectory()) {
+							recursiveDirectoryListing(subPath, function (sublist) {
+								arrayEach(sublist, function (j, subitem) {
+									list.push(file + '/' + subitem);
+								});
+								a.set(file, true);
+							});
+						} else {
+							list.push(file);
+							a.set(file, true);
+						}
+					});
+				});
+				a.once(files, next);
 			});
 		});
 		a.chain(function () {
