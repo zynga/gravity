@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.10';
+	gravity.VERSION = '0.6.11';
 
 	var
 		atom = require('./atom/atom'),
@@ -592,8 +592,12 @@
 		var build = atom.create(), files = atom.create();
 		gravity.map(mapOrURI, function (map) {
 			build.set('map', map);
-			gravity.list(map, base, function (list) {
-				build.set('list', list);
+			gravity.list(map, base, function (err, list) {
+				if (err) {
+					build.set('done', err);
+				} else {
+					build.set('list', list);
+				}
 			});
 		});
 		build.once(['map', 'list'], function (map, list) {
@@ -637,7 +641,7 @@
 			getList(base, '', map, function (list) {
 				//console.log('gravity.list(...)', { mapOrURI: mapOrURI, base: base });
 				//console.log(list);
-				callback(list);
+				callback(undefined, list);
 			});
 		});
 	};

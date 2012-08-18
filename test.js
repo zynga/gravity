@@ -33,11 +33,12 @@ assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 
 a.chain(function (next) {
 	var base = '/Users/ccampbell/Dropbox/gravity/test/proj-1/src';
-	gravity.list(base + '/gravity.map', base, function (list) {
+	gravity.list(base + '/gravity.map', base, function (err, list) {
 		list.sort();
 		assert(
 			'gravity.list() returns correct list for test/proj-1/src',
-			list + '' === 'out.js,subdir/2.js,subdir/4.js,subdir/subsubdir/3.js'
+			list + '' ===
+				'out.js,subdir/2.js,subdir/4.js,subdir/subsubdir/3.js,word.png'
 		);
 		next();
 	});

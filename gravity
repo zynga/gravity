@@ -17,7 +17,7 @@ var
 			hostPort
 		;
 
-		if (command === 'version' || command === 'serve' || command === 'build') {
+		if (command === 'build' || command === 'serve' || command === 'version') {
 			console.log('gravity version ' + gravity.VERSION);
 			if (command === 'version') {
 				process.exit(0);
@@ -25,36 +25,41 @@ var
 		}
 
 		if (len < 3 ||
-			(command !== 'serve' && command !== 'get' && command !== 'build') ||
-			(command === 'get' && len < 4) ||
+			(command !== 'build' && command !== 'get' && command !== 'list' &&
+				command !== 'pull' && command !== 'serve') ||
+			(command === 'list' && len < 3) ||
+			((command === 'get' || command === 'pull') && len < 4) ||
 			(command === 'build' && len < 4))
 		{
 			console.log('Usage:');
 			console.log('  gravity build <dir> <outdir>');
 			console.log('    or');
-			console.log('  gravity get <dir> <path>');
+			console.log('  gravity list <dir>');
+			console.log('    or');
+			console.log('  gravity pull <dir> <path>');
 			console.log('    or');
 			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
 			process.exit(1);
 		}
 
-		args.serve = command === 'serve';
-		args.get = command === 'get';
 		args.build = command === 'build';
+		args.list = command === 'list';
+		args.pull = command === 'pull' || command === 'get';
+		args.serve = command === 'serve';
 		args.dir = dir.charAt(slash) === '/' ? dir.substr(0, slash) : dir;
+
+		if (args.build) {
+			args.outDir = lastArg;
+		}
+
+		if (args.pull) {
+			args.path = lastArg;
+		}
 
 		if (args.serve) {
 			hostPort = (arg4 || ':').split(':');
 			args.host = hostPort[0];
 			args.port = hostPort[1];
-		}
-
-		if (args.get) {
-			args.path = lastArg;
-		}
-
-		if (args.build) {
-			args.outDir = lastArg;
 		}
 
 		return args;
@@ -82,7 +87,21 @@ if (args.serve) {
 }
 
 
-if (args.get) {
+if (args.list) {
+	gravity.list(gravMapFilePath, baseDir, function (err, list) {
+		var i = -1, len = list && list.length;
+		if (err) {
+			console.log(err);
+		} else {
+			while (++i < len) {
+				console.log(list[i]);
+			}
+		}
+	});
+}
+
+
+if (args.pull) {
 	gravity.pull(gravMapFilePath, baseDir, args.path, function (err, content) {
 		if (content) {
 			console.log(content + '');
