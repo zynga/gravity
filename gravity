@@ -62,15 +62,9 @@ var
 
 	baseDir = args.dir,
 
-	atom = require('./atom/atom'),
-	fs = require('fs'),
-	exec = require('child_process').exec,
-
 	// Gravity Map
 	gravMapFileName = 'gravity.map',
 	gravMapFilePath = baseDir + '/' + gravMapFileName,
-	gravMapJSON,
-	map,
 
 	// Server args
 	defaultHost = '127.0.0.1',
@@ -83,28 +77,13 @@ var
 ;
 
 
-try {
-	gravity.map(gravMapFilePath, function (result) {
-		map = result;
-	});
-} catch (ex) {
-	console.log('Gravity: no map found at ' + gravMapFilePath);
-	process.exit(1);
-}
-
-
-function isURL(str) {
-	return !!str.match(/^https?:\/\//);
-}
-
-
 if (args.serve) {
 	gravity.serve(gravMapFilePath, baseDir, serverHost, preferredPort);
 }
 
 
 if (args.get) {
-	gravity.pull(map, baseDir, args.path, function (err, content) {
+	gravity.pull(gravMapFilePath, baseDir, args.path, function (err, content) {
 		if (content) {
 			console.log(content + '');
 		}
@@ -112,147 +91,8 @@ if (args.get) {
 }
 
 
-function runBuild() {
-	var dryrun = false;
-
-	function log(msg) {
-		console.log((dryrun ? '[dry-run] ' : '') + msg);
-	}
-
-	function buildError(msg) {
-		log('ERROR: ' + msg);
-		process.exit(1);
-	}
-
-	var actions = {
-
-		buildDir: function (path, outDir, callback) {
-			var
-				a = atom.create(),
-				key,
-				reduced = gravity.reduce(map, path),
-				reducedMap = reduced.map
-			;
-			outDir += outDir.charAt(outDir.length - 1) !== '/' ? '/' : '';
-			log('buildDir(' + path + ', ' + outDir + ', ...)');
-
-			// Make sure the output dir exists.
-			try {
-				if (!fs.statSync(outDir).isDirectory()) {
-					buildError('Can\'t put build results in ' + outDir +
-						' because it is not a directory!');
-				}
-			} catch (ex) {
-				if (dryrun) {
-					log('mkdir ' + outDir);
-				} else {
-					fs.mkdirSync(outDir, '0755');
-				}
-			}
-
-			function queueNode(key, node) {
-				// Determine which action to use for this node.
-				var
-					isString = typeof node === 'string',
-					isDir = isString && !isURL(node) &&
-						fs.statSync(baseDir + '/' + node).isDirectory(),
-					action = isString ?
-						(isDir ? 'copyDir' : 'fetchContent') :
-						node.length ? 'fetchContent' : 'buildDir'
-				;
-
-				// Add this build action to the queue.
-				a.chain(function (nextNode) {
-					actions[action](
-						(path ? (path + '/') : '') + key,
-						outDir + key,
-						nextNode
-					);
-				});
-			}
-
-			for (key in reducedMap) {
-				if (reducedMap.hasOwnProperty(key) && key.charAt(0) !== '~') {
-					queueNode(key, reducedMap[key]);
-				}
-			}
-
-			a.chain(callback);
-		},
-
-		copyDir: function (path, dstDir, callback) {
-			var
-				reduced = gravity.reduce(map, path),
-				reducedMap = reduced.map,
-				reducedMapType = typeof reducedMap,
-				srcDir = reducedMapType === 'string' ? reducedMap : reduced.prefix,
-				command = 'cp -r ' + baseDir + '/' + srcDir + ' ' + dstDir,
-				msg = 'A ' + dstDir + '/[*]'
-			;
-			log('copyDir(' + path + ', ' + dstDir + ', ...)');
-			if (dryrun) {
-				log(command);
-				log(msg);
-				callback();
-			} else {
-				exec(
-					command,
-					function (err, stdout, sterr) {
-						if (err) {
-							buildError('Could not copy directory: ' + srcDir);
-						}
-						log(msg);
-						callback();
-					}
-				);
-			}
-		},
-
-		fetchContent: function (path, dstPath, done) {
-			var msg = 'A ' + dstPath, ext = dstPath.split('.').pop();
-			//log('fetchContent(' + path + ', ' + dstPath + ', ...)');
-			gravity.pull(map, baseDir, path, function (err, content) {
-				if (err) {
-					buildError('Could not retrieve content for ' + dstPath);
-				}
-				if (dryrun) {
-					log(msg);
-					done();
-				} else {
-					fs.open(dstPath, 'w', function (err, fd) {
-						if (err) {
-							buildError('Could not open file for writing: ' + dstPath);
-						}
-						try {
-							fs.write(fd, content, 0, content.length, 0,
-								function (err, written) {
-									if (err) {
-										buildError('Could not write to file (2): ' +
-											dstPath);
-									}
-									log(msg);
-									done();
-								}
-							);
-						} catch (ex) {
-							console.error(ex.message);
-							buildError('Could not write to file (1): ' + dstPath);
-						}
-					});
-				}
-			});
-		}
-	};
-
-	actions.buildDir('', outDir, function () {
-		log('Gravity build complete: ' + outDir);
-	});
-}
-
-
 if (args.build) {
-	//runBuild();
-	gravity.build(map, baseDir, outDir, function (err) {
+	gravity.build(gravMapFilePath, baseDir, outDir, function (err) {
 		if (err) {
 			console.log('gravity.build() error:', err);
 		} else {
