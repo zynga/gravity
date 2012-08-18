@@ -4,5 +4,6 @@
 		"subdir/2.js",
 		"subdir/subsubdir/3.js"
 	],
-	"subdir/": "subdir"
+	"subdir/": "subdir",
+	"word.png": "word.png"
 }

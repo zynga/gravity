@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.7';
+	gravity.VERSION = '0.6.8';
 
 	var
 		atom = require('./atom/atom'),
