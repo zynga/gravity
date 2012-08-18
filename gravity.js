@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.6';
+	gravity.VERSION = '0.6.7';
 
 	var
 		atom = require('./atom/atom'),
@@ -148,8 +148,8 @@
 			subValue, suffix;
 		while (splits.length) {
 			split = splits.shift();
-			prefix = split[0];
 			suffix = split[1];
+			prefix = suffix ? split[0] + '/' : split[0];
 			mapNode = map[prefix];
 			if (mapNode) {
 				if (!suffix || typeof mapNode === 'string') {
@@ -174,7 +174,6 @@
 	// Given a local file path (relative to base), fetch the file contents.
 	function getFile(base, path, callback, addLineHints) {
 		var filePath = base + '/' + path;
-		//console.log('getFile(' + filePath + ')');
 		fs.stat(filePath, function (err, stat) {
 			if (err || stat.isDirectory()) {
 				callback({ code: 404, message: 'Not Found: ' + path });
@@ -210,7 +209,6 @@
 			temporary = firstChar === '~',
 			literal = firstChar === '='
 		;
-		//console.log('getResource(' + internal + ', ' + path + ', ...)');
 
 		if (literal) {
 			callback(null, new Buffer(path.substr(1) + '\n'));
@@ -461,9 +459,12 @@
 	}
 
 	function arrayEach(arr, callback) {
-		var i = -1, len = arr && arr.length;
+		var i = -1, len = arr && arr.length, rtval;
 		while (++i < len) {
-			callback(i, arr[i]);
+			rtval = callback(i, arr[i]);
+			if (rtval === false) {
+				break;
+			}
 		}
 	}
 
@@ -534,9 +535,115 @@
 		});
 	}
 
+	function write(outDir, path, content, callback) {
+		var call = atom.create(), outPath = outDir + '/' + path;
+		console.log('write ' + outPath);
+		fs.open(outPath, 'wx', function (err, fd) {
+			if (err) {
+				call.set('done', err);
+			} else {
+				fs.write(fd, content, 0, content.length, 0, function (err) {
+					call.set('done', err || null);
+				});
+			}
+		});
+		call.once('done', callback);
+	}
+
+	function createDirectories(out, path, callback) {
+		//console.log('createDirectories(' + out + ', ' + path + ')');
+		var
+			action = atom.create(),
+			splits = getResourcePathSplits(path),
+			dirs = atom.create(),
+			last
+		;
+		splits.shift(); // Don't create the file itself as a directory
+		splits.reverse(); // Create out first, then go deeper
+		arrayEach(splits, function (i, split) {
+			var
+				prefix = split[0],
+				dir = prefix ? out + '/' + prefix : out
+			;
+			function makeDir() {
+				fs.mkdir(dir, function (err) {
+					if (err) {
+						if (err.code === 'EEXIST') {
+							// Already exists, that's ok
+							dirs.set(dir, true);
+						} else {
+							action.set('done', err);
+						}
+					} else {
+						console.log('mkdir', dir);
+						dirs.set(dir, true);
+					}
+				});
+			}
+			if (last) {
+				dirs.once(last, makeDir);
+			} else {
+				makeDir();
+			}
+			last = dir;
+		});
+		dirs.once(last, function () {
+			action.set('done', null);
+		});
+		action.once('done', callback);
+	}
+
+	gravity.build = function (mapOrURI, base, out, callback) {
+		var build = atom.create(), files = atom.create();
+		gravity.map(mapOrURI, function (map) {
+			build.set('map', map);
+			gravity.list(map, base, function (list) {
+				build.set('list', list);
+			});
+		});
+		build.once(['map', 'list'], function (map, list) {
+			arrayEach(list, function (i, path) {
+				var item = atom.create();
+				gravity.pull(map, base, path, function (err, content) {
+					if (err) {
+						build.set('done', err);
+					} else {
+						item.set('content', content);
+					}
+				});
+				item.once('content', function (content) {
+					createDirectories(out, path, function (err) {
+						if (err) {
+							build.set('done', err);
+						} else {
+							item.set('dir', true);
+						}
+					});
+				});
+				item.once(['content', 'dir'], function (content) {
+					write(out, path, content, function (err) {
+						if (err) {
+							build.set('done', err);
+						} else {
+							files.set(path, true);
+						}
+					});
+				});
+			});
+			files.once(list, function () {
+				build.set('done', null);
+			});
+		});
+		build.once('done', callback);
+	};
+
 	gravity.list = function (mapOrURI, base, callback) {
 		gravity.map(mapOrURI, function (map) {
-			getList(base, '', map, callback);
+			getList(base, '', map, function (list) {
+				//console.log('gravity.list(...)', { mapOrURI: mapOrURI, base: base });
+				//console.log(list);
+				callback(list);
+			});
 		});
 	};
 
@@ -550,6 +657,7 @@
 	};
 
 	gravity.pull = function (mapOrURI, base, path, callback) {
+		//console.log('gravity.pull(...)', { mapOrURI: mapOrURI, base: base, path: path });
 		gravity.map(mapOrURI, function (map) {
 			getResource(map, base, false, path, callback);
 		});

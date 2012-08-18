@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/*global __dirname, process, require*/
+/*global process, require*/
 /* vim: set syntax=javascript: */
 var
 	gravity = require('./gravity.js'),
@@ -251,5 +251,12 @@ function runBuild() {
 
 
 if (args.build) {
-	runBuild();
+	//runBuild();
+	gravity.build(map, baseDir, outDir, function (err) {
+		if (err) {
+			console.log('gravity.build() error:', err);
+		} else {
+			console.log('Done.');
+		}
+	});
 }
