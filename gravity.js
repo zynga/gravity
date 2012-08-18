@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.9';
+	gravity.VERSION = '0.6.10';
 
 	var
 		atom = require('./atom/atom'),
@@ -34,9 +34,11 @@
 
 	// Private functions
 
-	var isArray = Array.isArray || function (obj) {
-		return Object.prototype.toString.call(obj) === '[object Array]';
-	};
+	function endsWith(longStr, shortStr) {
+		var longLen = longStr.length, shortLen = shortStr.length;
+		return (longLen >= shortLen) &&
+			(longStr.substr(longLen - shortLen) === shortStr);
+	}
 	function inArray(arr, value) {
 		for (var i = arr.length; --i >= 0;) {
 			if (arr[i] === value) {
@@ -44,13 +46,9 @@
 			}
 		}
 	}
-
-	function endsWith(longStr, shortStr) {
-		var longLen = longStr.length, shortLen = shortStr.length;
-		return (longLen >= shortLen) &&
-			(longStr.substr(longLen - shortLen) === shortStr);
-	}
-
+	var isArray = Array.isArray || function (obj) {
+		return Object.prototype.toString.call(obj) === '[object Array]';
+	};
 	function isURL(str) {
 		return !!str.match(/^https?:\/\//);
 	}
@@ -166,9 +164,6 @@
 		}
 		return { map: map, prefix: '', suffix: path };
 	}
-
-	// XXX TODO FIXME: remove this; shouldn't be part of public interface.
-	gravity.reduce = reduce;
 
 
 	// Given a local file path (relative to base), fetch the file contents.
