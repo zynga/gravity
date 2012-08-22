@@ -43,7 +43,7 @@ a.chain(function (next) {
 		assert(
 			'gravity.list() returns correct list for test/proj-1/src',
 			list + '' ===
-				'out.js,subdir/2.js,subdir/4.js,subdir/subsubdir/3.js,word.png'
+				'out.js,subsubdir/3.js,word.png'
 		);
 		next();
 	});
