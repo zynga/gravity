@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.12';
+	gravity.VERSION = '0.6.13';
 
 	var
 		atom = require('./atom/atom'),
@@ -503,6 +503,9 @@
 	function getList(base, path, mapNode, callback) {
 		var a = atom.create(), list = [];
 		eachMapProperty(mapNode, function (prop, val, type, isDir) {
+			if (prop.charAt(0) === '~') {
+				return;
+			}
 			a.chain(function (next) {
 				var pathProp = (path ? (path + '/') : '') + prop;
 
