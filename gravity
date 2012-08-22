@@ -14,23 +14,24 @@ var
 			lastArg = arg4 || dir,
 			slash = dir && (dir.length - 1),
 			args = {},
-			hostPort
+			hostPort,
+			badUsage = (len < 3 ||
+				(command !== 'build' && command !== 'get' && command !== 'list' &&
+					command !== 'pull' && command !== 'serve') ||
+				(command === 'list' && len < 3) ||
+				((command === 'get' || command === 'pull') && len < 4) ||
+				(command === 'build' && len < 4))
 		;
 
-		if (command === 'build' || command === 'serve' || command === 'version') {
+		if (badUsage || command === 'build' || command === 'serve' || command === 'version') {
 			console.log('gravity version ' + gravity.VERSION);
 			if (command === 'version') {
 				process.exit(0);
 			}
 		}
 
-		if (len < 3 ||
-			(command !== 'build' && command !== 'get' && command !== 'list' &&
-				command !== 'pull' && command !== 'serve') ||
-			(command === 'list' && len < 3) ||
-			((command === 'get' || command === 'pull') && len < 4) ||
-			(command === 'build' && len < 4))
-		{
+		if (badUsage) {
+			console.log('');
 			console.log('Usage:');
 			console.log('  gravity build <dir> <outdir>');
 			console.log('    or');
