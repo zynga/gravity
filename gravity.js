@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.13';
+	gravity.VERSION = '0.6.14';
 
 	var
 		atom = require('./atom/atom'),
@@ -536,7 +536,7 @@
 	function write(outDir, path, content, callback) {
 		var call = atom.create(), outPath = outDir + '/' + path;
 		console.log('write ' + outPath);
-		fs.open(outPath, 'wx', function (err, fd) {
+		fs.open(outPath, 'w', function (err, fd) {
 			if (err) {
 				call.set('done', err);
 			} else {
