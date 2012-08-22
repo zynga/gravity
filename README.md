@@ -1,4 +1,4 @@
-OVERVIEW
+Overview
 ========
 
 Often when deploying JS components, you want to compile a multitude of source
@@ -26,12 +26,12 @@ should be the result of compiling various source files (or even other build
 products) together.
 
 
-INSTALLATION
+Installation
 ============
 
 Prerequisites:
 
- - node
+ - node 0.6 or greater
  - git 1.7 or greater
 
 To install to ~/git/gravity
@@ -46,17 +46,23 @@ Of course you can check it out wherever you like.  Just make sure you add the
 gravity dir (in this example ~/git/gravity) to your path.
 
 
-BASIC COMMANDS
-==============
+Commands
+========
 
-gravity serve
--------------
+### gravity list
+
+To see a list of all the build products, where `<dir>` is the location of your
+project's directory (ie., wherever the gravity.map file is):
+
+	gravity list <dir>
+
+
+### gravity serve
 
 During development, you can run gravity as a local server that will perform
-on-the-fly concatenation of your source.  In your project's directory (ie.,
-wherever the gravity.map file is), run:
+on-the-fly concatenation of your source.
 
-	gravity serve .
+	gravity serve <dir>
 
 The server should find an available local port to attach to, and will announce
 itself:
@@ -67,30 +73,28 @@ Now you can visit http://127.0.0.1:1337/final.js to see the results.  Edit a
 source file, then refresh the page to see the change instantly!
 
 If you want your gravity server to bind to a specific host or port, you can
-specify those:
+specify those.  Can also be run as a background process.
 
-	gravity serve . <host>:<port>
+	gravity serve <dir> <host>:<port> &
 
 
-gravity build
--------------
+### gravity build
 
 Come build time, run a command like this:
 
-	gravity build . <outdir>
+	gravity build <dir> <outdir>
 
 Gravity will take only your build targets and put them into `<outdir>`.
 
 
-gravity get
------------
+### gravity pull (a.k.a get)
 
 If you just want to see a specific build target, you can do this:
 
-	gravity get . final.js
+	gravity pull <dir> final.js
 
 
-MORE DOCUMENTATION
+More Documentation
 ==================
 
 See `FEATURES.md`
