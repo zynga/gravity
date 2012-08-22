@@ -29,7 +29,12 @@ function assert(msg, success) {
 	}
 }
 
+assert('gravity.VERSION is a string', typeof gravity.VERSION === 'string');
+assert('gravity.build() is a function', typeof gravity.build === 'function');
+assert('gravity.list() is a function', typeof gravity.list === 'function');
+assert('gravity.map() is a function', typeof gravity.map === 'function');
 assert('gravity.pull() is a function', typeof gravity.pull === 'function');
+assert('gravity.serve() is a function', typeof gravity.serve === 'function');
 
 a.chain(function (next) {
 	var base = '/Users/ccampbell/Dropbox/gravity/test/proj-1/src';
