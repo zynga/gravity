@@ -91,6 +91,7 @@ Gravity will take only your build targets and put them into `<outdir>`.
 
 ### gravity pull (a.k.a get)
 
-If you just want to see a specific build target, you can do this:
+If you just want to see a specific build target produced and dumped to stdout,
+you can do this:
 
 	gravity pull <dir> final.js
