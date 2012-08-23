@@ -25,6 +25,8 @@ This tells gravity that you want a build product called `final.js`, and that it
 should be the result of compiling various source files (or even other build
 products) together.
 
+Full documentation of gravity.map syntax can be found in the `SYNTAX.md` file.
+
 
 Installation
 ============
@@ -92,9 +94,3 @@ Gravity will take only your build targets and put them into `<outdir>`.
 If you just want to see a specific build target, you can do this:
 
 	gravity pull <dir> final.js
-
-
-More Documentation
-==================
-
-See `FEATURES.md`
