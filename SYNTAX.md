@@ -2,7 +2,7 @@ Syntax of gravity.map files
 ===========================
 
 A `gravity.map` file must be valid JSON, with the exception that
-JavaScript-style line-comments are allowed, as long as the first non-whitespace
+JavaScript-style line comments are allowed, as long as the first non-whitespace
 characters on the line are "//".
 
 	{
