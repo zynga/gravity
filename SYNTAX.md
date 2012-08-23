@@ -1,5 +1,14 @@
-GRAVITY MAP SYNTAX / FEATURES
-=============================
+Syntax of gravity.map files
+===========================
+
+A `gravity.map` file must be valid JSON, with the exception that
+JavaScript-style line-comments are allowed, as long as the first non-whitespace
+characters on the line are "//".
+
+	{
+		// Example
+	}
+
 
 Temporary Build Products (~)
 ----------------------------
@@ -62,4 +71,29 @@ They are useful for inserting one-liner comments or scoping functions, etc.
 			...
 			"=}());"
 		]
+	}
+
+
+Directories (/)
+---------------
+
+Build products can be organized into subdirectories using two different
+techniques.  To simply include a source directory in the build output, do this:
+
+	{
+		"images/": "src/images"
+	}
+
+(The trailing slash in the property name is necessary.)
+
+The above method will include ALL contents of the src/images directory in the
+build output "images/" directory.
+
+Another option is to create a target directory with only explicit contents.
+
+	{
+		"images/": {
+			"background.png": "src/assets/bg.png",
+			"logo.png": "branding/logo-50x50px.png"
+		}
 	}
