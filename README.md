@@ -51,6 +51,9 @@ gravity dir (in this example ~/git/gravity) to your path.
 Commands
 ========
 
+Mac/unix/cygwin users will be able to invoke "gravity" directly.  To run the
+commands in Windows cmd.exe, just prepend "node " to the commands below.
+
 ### gravity list
 
 To see a list of all the build products, where `<dir>` is the location of your
