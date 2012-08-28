@@ -48,7 +48,8 @@ a.chain(function (next) {
 	gravity.list(src + '/gravity.map', src, function (err, list) {
 		list.sort();
 		assert(
-			'gravity.list() returns correct list for test/proj-1/src',
+			'gravity.list() correctly includes subdirectory contents, and omits ' +
+				'temporary build targets',
 			list + '' ===
 				'out.js,subsubdir/3.js,word.png'
 		);
