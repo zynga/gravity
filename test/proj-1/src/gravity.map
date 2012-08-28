@@ -1,9 +1,13 @@
 {
+	"~1": "1.js",
+
 	"out.js": [
-		"1.js",
+		"~1",
 		"subdir/2.js",
 		"subdir/subsubdir/3.js"
 	],
+
 	"subsubdir/": "subdir/subsubdir",
+
 	"word.png": "word.png"
 }

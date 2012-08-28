@@ -30,12 +30,14 @@ function assert(msg, success) {
 	}
 }
 
+
 assert('gravity.VERSION is a string', typeof gravity.VERSION === 'string');
 assert('gravity.build() is a function', typeof gravity.build === 'function');
 assert('gravity.list() is a function', typeof gravity.list === 'function');
 assert('gravity.map() is a function', typeof gravity.map === 'function');
 assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 assert('gravity.serve() is a function', typeof gravity.serve === 'function');
+
 
 a.chain(function (next) {
 	var
@@ -54,47 +56,75 @@ a.chain(function (next) {
 	});
 });
 
-a.chain(function (next) {
-	var
-		base = 'test/concat-1',
-		src = base + '/src',
-		map = src + '/gravity.map',
-		build = base + '/build',
-		file = 'two-files.js'
-	;
-	gravity.pull(map, src, file, function (err, content) {
-		var
-			pulled = content + '',
-			preBuilt = fs.readFileSync(build + '/' + file) + ''
-		;
-		assert(
-			'gravity.pull() of a 2-file concatenation works',
-			pulled === preBuilt
-		);
-		next();
-	});
-});
 
-a.chain(function (next) {
+// File concatenation tests
+(function () {
 	var
 		base = 'test/concat-1',
 		src = base + '/src',
 		map = src + '/gravity.map',
-		build = base + '/build',
-		file = 'two-literals.js'
+		build = base + '/build'
 	;
-	gravity.pull(map, src, file, function (err, content) {
+	
+	a.chain(function (next) {
 		var
-			pulled = content + '',
+			file = 'two-files.js',
 			preBuilt = fs.readFileSync(build + '/' + file) + ''
 		;
-		assert(
-			'gravity.pull() of a 2-literal concatenation works',
-			pulled === preBuilt
-		);
-		next();
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() of a 2-file concatenation works',
+				content + '' === preBuilt
+			);
+			next();
+		});
 	});
-});
+
+	a.chain(function (next) {
+		var
+			file = 'two-literals.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() of a 2-literal concatenation works',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+
+	a.chain(function (next) {
+		var
+			file = 'file-temp-literal.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() works with a target composed of a file, a temporary ' +
+					'build product, and a literal',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+
+	a.chain(function (next) {
+		var
+			file = 'line-hints.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() correctly adds line number hints to source files ' +
+					'longer than 10 lines',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+}());
+
 
 a.chain(function () {
 	logger(totals);

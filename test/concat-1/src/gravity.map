@@ -7,5 +7,24 @@
 	"two-literals.js": [
 		"=// A",
 		"=// B"
+	],
+
+	"~temp-2": [
+		"2.js"
+	],
+
+	"file-temp-literal.js": [
+		"1.js",
+		"~temp-2",
+		"=// C"
+	],
+
+	"~long-1": [
+		"long-1.js"
+	],
+
+	"line-hints.js": [
+		"~long-1",
+		"long-2.js"
 	]
 }
