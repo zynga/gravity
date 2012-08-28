@@ -1,3 +1,4 @@
+/*global global, module*/
 var gravity = (function (name) {
 	var root = typeof window !== 'undefined' ? window : global,
 		had = Object.prototype.hasOwnProperty.call(root, name),
