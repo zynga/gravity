@@ -1,3 +1,11 @@
 {
-	"out.js": [ "1.js", "2.js" ]
+	"two-files.js": [
+		"1.js",
+		"2.js"
+	],
+
+	"two-literals.js": [
+		"=// A",
+		"=// B"
+	]
 }

@@ -38,8 +38,12 @@ assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 assert('gravity.serve() is a function', typeof gravity.serve === 'function');
 
 a.chain(function (next) {
-	var base = 'test/proj-1/src';
-	gravity.list(base + '/gravity.map', base, function (err, list) {
+	var
+		base = 'test/proj-1',
+		src = base + '/src',
+		map = src + '/gravity.map'
+	;
+	gravity.list(src + '/gravity.map', src, function (err, list) {
 		list.sort();
 		assert(
 			'gravity.list() returns correct list for test/proj-1/src',
@@ -51,14 +55,41 @@ a.chain(function (next) {
 });
 
 a.chain(function (next) {
-	var base = 'test/concat-1/src';
-	gravity.pull(base + '/gravity.map', base, 'out.js', function (err, content) {
+	var
+		base = 'test/concat-1',
+		src = base + '/src',
+		map = src + '/gravity.map',
+		build = base + '/build',
+		file = 'two-files.js'
+	;
+	gravity.pull(map, src, file, function (err, content) {
 		var
 			pulled = content + '',
-			preBuilt = fs.readFileSync('test/concat-1/build/out.js') + ''
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
 		;
 		assert(
 			'gravity.pull() of a 2-file concatenation works',
+			pulled === preBuilt
+		);
+		next();
+	});
+});
+
+a.chain(function (next) {
+	var
+		base = 'test/concat-1',
+		src = base + '/src',
+		map = src + '/gravity.map',
+		build = base + '/build',
+		file = 'two-literals.js'
+	;
+	gravity.pull(map, src, file, function (err, content) {
+		var
+			pulled = content + '',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		assert(
+			'gravity.pull() of a 2-literal concatenation works',
 			pulled === preBuilt
 		);
 		next();
