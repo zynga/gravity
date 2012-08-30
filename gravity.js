@@ -248,8 +248,7 @@
 				// TODO: Do we really want to support listings?
 
 			} else {
-				// WTF?
-				callback({ code: 500, message: 'gravity.map is whack.' });
+				callback({ code: 500, message: 'Unable to read gravity.map.' });
 			}
 		}
 	}
