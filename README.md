@@ -40,7 +40,7 @@ To install to ~/git/gravity
 
 	mkdir ~/git
 	cd ~/git
-	git clone git@github-ca.corp.zynga.com:ccampbell/gravity.git
+	git clone git://github.com/zynga/gravity.git
 	cd gravity
 	git submodule update --init
 
