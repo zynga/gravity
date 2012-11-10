@@ -36,16 +36,9 @@ Prerequisites:
  - node 0.6 or greater
  - git 1.7 or greater
 
-To install to ~/git/gravity
+To install:
 
-	mkdir ~/git
-	cd ~/git
-	git clone git://github.com/zynga/gravity.git
-	cd gravity
-	git submodule update --init
-
-Of course you can check it out wherever you like.  Just make sure you add the
-gravity dir (in this example ~/git/gravity) to your path.
+	npm install gravity-js
 
 
 Commands

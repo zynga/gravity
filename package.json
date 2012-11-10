@@ -1,0 +1,18 @@
+{
+  "name": "gravity-js",
+  "version": "0.6.15",
+  "description": "A light-weight JS build tool",
+  "author": "Chris Campbell <ccampbell@zynga.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/zynga/gravity.git"
+  },
+  "main": "./gravity.js",
+  "bin": {
+    "gravity": "./gravity"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "BSD"
+}
