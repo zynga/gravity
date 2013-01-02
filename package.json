@@ -1,6 +1,6 @@
 {
   "name": "gravity-js",
-  "version": "0.6.17",
+  "version": "0.6.18",
   "description": "A light-weight JS build tool",
   "author": "Chris Campbell <ccampbell@zynga.com>",
   "repository": {
