@@ -9,5 +9,10 @@
 
 	"subsubdir/": "subdir/subsubdir",
 
+	"enum/": {
+		"1.js": "~1",
+		"2.js": "subdir/2.js"
+	},
+
 	"word.png": "word.png"
 }

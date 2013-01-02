@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.17';
+	gravity.VERSION = '0.6.18';
 
 	var
 		atom = require('./atom/atom'),
@@ -476,9 +476,13 @@
 		}
 	}
 
+	function ensureTrailingSlash(str) {
+		return endsWith(str, '/') ? str : str + '/';
+	}
+
 	function recursiveDirectoryListing(dir, callback) {
-		var a = atom.create(), list = [];
-		a.chain(function (next) {
+		var a = atom.create(), chain = a.chain, list = [], set = a.set;
+		chain(function (next) {
 			fs.readdir(dir, function (err, files) {
 				arrayEach(files, function (i, file) {
 					var subPath = dir + '/' + file;
@@ -491,35 +495,38 @@
 								arrayEach(sublist, function (j, subitem) {
 									list.push(file + '/' + subitem);
 								});
-								a.set(file, true);
+								set(file, true);
 							});
 						} else {
 							list.push(file);
-							a.set(file, true);
+							set(file, true);
 						}
 					});
 				});
 				a.once(files, next);
 			});
 		});
-		a.chain(function () {
+		chain(function () {
 			callback(list);
 		});
 	}
 
 	function getList(base, path, mapNode, callback) {
-		var a = atom.create(), list = [];
+		var a = atom.create(), chain = a.chain, list = [];
 		eachMapProperty(mapNode, function (prop, val, type, isDir) {
 			if (prop.charAt(0) === '~') {
 				return;
 			}
-			a.chain(function (next) {
-				var pathProp = (path ? (path + '/') : '') + prop;
+			chain(function (next) {
+				var
+					pathProp = (path ? ensureTrailingSlash(path) : '') + prop,
+					prefix = ''
+				;
 
 				function handleSublist(sublist) {
 					var i = -1, len = sublist.length;
 					while (++i < len) {
-						list.push(pathProp + sublist[i]);
+						list.push(prefix + sublist[i]);
 					}
 					next();
 				}
@@ -528,6 +535,7 @@
 					getList(base, pathProp, val, handleSublist);
 				} else if (isDir) {
 					// Use fs to list directory contents
+					prefix = pathProp;
 					recursiveDirectoryListing(base + '/' + val, handleSublist);
 				} else {
 					list.push(pathProp);
@@ -535,7 +543,7 @@
 				}
 			});
 		});
-		a.chain(function () {
+		chain(function () {
 			callback(list);
 		});
 	}

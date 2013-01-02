@@ -10,6 +10,7 @@ var
 	arg2 = argv && argv.length > 2 && argv[2],
 	verbose = inBrowser || arg2 === '-v',
 	a = atom.create(),
+	chain = a.chain,
 	results = [],
 	totals = { success: 0, fail: 0, total: 0 },
 	fs = require('fs')
@@ -39,7 +40,7 @@ assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 assert('gravity.serve() is a function', typeof gravity.serve === 'function');
 
 
-a.chain(function (next) {
+chain(function (next) {
 	var
 		base = 'test/proj-1',
 		src = base + '/src',
@@ -51,7 +52,7 @@ a.chain(function (next) {
 			'gravity.list() correctly includes subdirectory contents, and omits ' +
 				'temporary build targets',
 			list + '' ===
-				'out.js,subsubdir/3.js,word.png'
+				'enum/1.js,enum/2.js,out.js,subsubdir/3.js,word.png'
 		);
 		next();
 	});
@@ -67,7 +68,7 @@ a.chain(function (next) {
 		build = base + '/build'
 	;
 	
-	a.chain(function (next) {
+	chain(function (next) {
 		var
 			file = 'two-files.js',
 			preBuilt = fs.readFileSync(build + '/' + file) + ''
@@ -81,7 +82,7 @@ a.chain(function (next) {
 		});
 	});
 
-	a.chain(function (next) {
+	chain(function (next) {
 		var
 			file = 'two-literals.js',
 			preBuilt = fs.readFileSync(build + '/' + file) + ''
@@ -95,7 +96,7 @@ a.chain(function (next) {
 		});
 	});
 
-	a.chain(function (next) {
+	chain(function (next) {
 		var
 			file = 'file-temp-literal.js',
 			preBuilt = fs.readFileSync(build + '/' + file) + ''
@@ -110,7 +111,7 @@ a.chain(function (next) {
 		});
 	});
 
-	a.chain(function (next) {
+	chain(function (next) {
 		var
 			file = 'line-hints.js',
 			preBuilt = fs.readFileSync(build + '/' + file) + ''
@@ -127,6 +128,6 @@ a.chain(function (next) {
 }());
 
 
-a.chain(function () {
+chain(function () {
 	logger(totals);
 });
