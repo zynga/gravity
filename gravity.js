@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.18';
+	gravity.VERSION = '0.6.19';
 
 	var
 		atom = require('./atom/atom'),
@@ -341,13 +341,14 @@
 		;
 
 		function pad2(num) {
-			return (num + 101 + '').substr(1);
+			return (num + 100 + '').substr(1);
 		}
 
 		function timestamp() {
 			var
 				d = new Date(),
-				day = [d.getFullYear(), pad2(d.getMonth()), d.getDate()].join('-'),
+				day = [d.getFullYear(), pad2(d.getMonth() + 1),
+					pad2(d.getDate())].join('-'),
 				time = [pad2(d.getHours()), pad2(d.getMinutes()),
 					pad2(d.getSeconds())].join(':')
 			;
