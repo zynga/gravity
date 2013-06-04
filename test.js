@@ -67,7 +67,7 @@ chain(function (next) {
 		map = src + '/gravity.map',
 		build = base + '/build'
 	;
-	
+
 	chain(function (next) {
 		var
 			file = 'two-files.js',
