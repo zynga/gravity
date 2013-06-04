@@ -33,7 +33,7 @@ Installation
 
 Prerequisites:
 
- - node 0.6 or greater
+ - node 0.8 or greater
  - git 1.7 or greater
 
 To install:

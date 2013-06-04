@@ -1,8 +1,12 @@
 {
   "name": "gravity-js",
-  "version": "0.6.20",
+  "version": "0.7.0",
   "description": "A light-weight JS build tool",
-  "author": "Chris Campbell <ccampbell@zynga.com>",
+  "author": "Chris Campbell <ccampbell@zynga.com> (https://github.com/quaelin)",
+  "homepage": "https://github.com/zynga/gravity",
+  "bugs": {
+    "url": "https://github.com/zynga/gravity/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/zynga/gravity.git"
@@ -11,8 +15,15 @@
   "bin": {
     "gravity": "./gravity"
   },
+  "dependencies": {
+    "atom-js": ">=0.5.5"
+  },
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "preferGlobal": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
   "license": "BSD"
 }

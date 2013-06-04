@@ -22,10 +22,10 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.6.20';
+	gravity.VERSION = '0.7.0';
 
 	var
-		atom = require('./atom/atom'),
+		atom = require('atom-js'),
 		http = require('http'),
 		url = require('url'),
 		fs = require('fs'),
