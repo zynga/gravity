@@ -5,9 +5,11 @@ A `gravity.map` file must be valid JSON, with the exception that
 JavaScript-style line comments are allowed, as long as the first non-whitespace
 characters on the line are "//".
 
+```javascript
 	{
 		// Example
 	}
+```
 
 
 Temporary Build Products (~)
@@ -22,6 +24,7 @@ localized strings in individual files under a `strings` dir, you can define
 locale-specific build targets that make use of an intermediary build target
 containing all of the business logic / UI code, etc.
 
+```json
 	{
 		"~engine.js": [
 			"src/utils.js",
@@ -44,6 +47,7 @@ containing all of the business logic / UI code, etc.
 
 		...
 	}
+```
 
 In the above example, `~engine.js` is a temporary build product, meaning it will
 not be placed into `<outdir>` or served up at a URL.  However, it defines a
@@ -62,6 +66,7 @@ referring to a source file or url.  Literals always begin with an equals sign
 
 They are useful for inserting one-liner comments or scoping functions, etc.
 
+```json
 	{
 		"encapsulated.js": [
 			"=// Encapsulate some assorted modules",
@@ -72,6 +77,7 @@ They are useful for inserting one-liner comments or scoping functions, etc.
 			"=}());"
 		]
 	}
+```
 
 
 Directories (/)
@@ -80,9 +86,11 @@ Directories (/)
 Build products can be organized into subdirectories using two different
 techniques.  To simply include a source directory in the build output, do this:
 
+```json
 	{
 		"images/": "src/images"
 	}
+```
 
 (The trailing slash in the property name is necessary.)
 
@@ -91,9 +99,11 @@ build output "images/" directory.
 
 Another option is to create a target directory with only explicit contents.
 
+```json
 	{
 		"images/": {
 			"background.png": "src/assets/bg.png",
 			"logo.png": "branding/logo-50x50px.png"
 		}
 	}
+```

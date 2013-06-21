@@ -13,6 +13,7 @@ A `gravity.map` is a JSON file that can be thought of as a project manifest.  In
 it, you can specify build targets, and the source files that are used to create
 each target.
 
+```json
 	{
 		"final.js": [
 			"src/1.js",
@@ -20,6 +21,7 @@ each target.
 			...
 		]
 	}
+```
 
 This tells gravity that you want a build product called `final.js`, and that it
 should be the result of compiling various source files (or even other build
