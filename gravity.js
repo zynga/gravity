@@ -22,11 +22,12 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.0';
+	gravity.VERSION = '0.7.1';
 
 	var
 		atom = require('atom-js'),
 		http = require('http'),
+		https = require('https'),
 		url = require('url'),
 		fs = require('fs'),
 		packResources
@@ -100,21 +101,18 @@
 
 	// Given a web URL, fetch the file contents.
 	function wget(fileURL, callback) {
-		var chunks = [], parsed = url.parse(fileURL);
-		http.get(
-			{
-				host: parsed.host,
-				port: parsed.port || 80,
-				path: parsed.pathname
-			},
-			function (res) {
-				res.on('data', function (chunk) {
-					chunks.push(chunk);
-				}).on('end', function () {
-					callback(null, joinBuffers(chunks));
-				});
-			}
-		);
+		var
+			chunks = [],
+			isHTTPS = fileURL.indexOf('https') === 0,
+			client = isHTTPS ? https : http
+		;
+		client.get(fileURL, function (res) {
+			res.on('data', function (chunk) {
+				chunks.push(chunk);
+			}).on('end', function () {
+				callback(null, joinBuffers(chunks));
+			});
+		});
 	}
 
 
