@@ -107,3 +107,21 @@ Another option is to create a target directory with only explicit contents.
 		}
 	}
 ```
+
+
+URLs
+----
+
+Urls beginning with `http://` or `https://` may be specified as values, in which
+case the contents of the URL will be fetched and inserted in place of the URL.
+
+```json
+	{
+		"atom.js": "http://zynga.github.io/atom/atom.js",
+
+		"atom-and-classes.js": [
+			"http://zynga.github.io/atom/atom.js",
+			"http://zynga.github.io/classes/classes.js"
+		]
+	}
+```

@@ -128,6 +128,61 @@ chain(function (next) {
 }());
 
 
+// URL fetching tests
+(function () {
+	var
+		base = 'test/urls-1',
+		src = base + '/src',
+		map = src + '/gravity.map',
+		build = base + '/build'
+	;
+
+	chain(function (next) {
+		var
+			file = 'direct-http-url.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() correctly returns the contents of an http:// ' +
+					'URL when specified as a direct value',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+
+	chain(function (next) {
+		var
+			file = 'direct-https-url.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() correctly returns the contents of an https:// ' +
+					'URL when specified as a direct value',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+
+	chain(function (next) {
+		var
+			file = 'compound-urls.js',
+			preBuilt = fs.readFileSync(build + '/' + file) + ''
+		;
+		gravity.pull(map, src, file, function (err, content) {
+			assert(
+				'gravity.pull() correctly handles URLs included in arrays',
+				content + '' === preBuilt
+			);
+			next();
+		});
+	});
+}());
+
+
 chain(function () {
 	logger(totals);
 

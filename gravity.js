@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.1';
+	gravity.VERSION = '0.7.2';
 
 	var
 		atom = require('atom-js'),
@@ -208,7 +208,10 @@
 			literal = firstChar === '='
 		;
 
-		if (literal) {
+		if (isURL(path)) {
+			wget(path, callback);
+
+		} else if (literal) {
 			callback(null, new Buffer(path.substr(1) + '\n'));
 
 		} else if (temporary && !internal) {

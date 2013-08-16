@@ -1,0 +1,12 @@
+{
+	"direct-http-url.js":
+		"http://zynga1-a.akamaihd.net/zlive/atom/0.5.6/atom.js",
+
+	"direct-https-url.js":
+		"https://zynga1-a.akamaihd.net/zlive/atom/0.5.6/atom.js",
+
+	"compound-urls.js": [
+		"http://zynga1-a.akamaihd.net/zlive/atom/0.5.6/atom.js",
+		"https://zynga1-a.akamaihd.net/zlive/atom/0.5.6/atom.js"
+	]
+}

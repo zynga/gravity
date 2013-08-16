@@ -1,6 +1,6 @@
 {
   "name": "gravity-js",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "A light-weight JS build tool",
   "author": "Chris Campbell <ccampbell@zynga.com> (https://github.com/quaelin)",
   "homepage": "https://github.com/zynga/gravity",
@@ -16,7 +16,7 @@
     "gravity": "./gravity"
   },
   "dependencies": {
-    "atom-js": ">=0.5.5"
+    "atom-js": ">=0.5.6"
   },
   "engines": {
     "node": ">=0.8.0"
