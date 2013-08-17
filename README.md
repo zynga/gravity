@@ -53,40 +53,41 @@ Commands
 Mac/unix/cygwin users will be able to invoke "gravity" directly.  To run the
 commands in Windows cmd.exe, just prepend "node " to the commands below.
 
+All of the folling commands have `<dir>` as an optional parameter.  If it is not
+specified, then it is assumed to be the current directory.
+
 ### gravity list
 
 To see a list of all the build products, where `<dir>` is the location of your
 project's directory (ie., wherever the gravity.map file is):
 
-	gravity list <dir>
-
+	gravity list [<dir>]
 
 ### gravity serve
 
 During development, you can run gravity as a local server that will perform
 on-the-fly concatenation of your source.
 
-	gravity serve <dir>
+	gravity serve [<dir>] localhost:1337
 
 The server should find an available local port to attach to, and will announce
 itself:
 
-	Gravity server running on http://127.0.0.1:1337/
+	Gravity server running on http://localhost:1337/
 
-Now you can visit http://127.0.0.1:1337/final.js to see the results.  Edit a
+Now you can visit http://localhost:1337/final.js to see the results.  Edit a
 source file, then refresh the page to see the change instantly!
 
-If you want your gravity server to bind to a specific host or port, you can
-specify those.  Can also be run as a background process.
+Can also be run as a background process.
 
-	gravity serve <dir> <host>:<port> &
+	gravity serve [<dir>] <host>:<port> &
 
 
 ### gravity build
 
 Come build time, run a command like this:
 
-	gravity build <dir> <outdir>
+	gravity build [<dir>] <outdir>
 
 Gravity will take only your build targets and put them into `<outdir>`.
 
@@ -96,7 +97,7 @@ Gravity will take only your build targets and put them into `<outdir>`.
 If you just want to see a specific build target produced and dumped to stdout,
 you can do this:
 
-	gravity pull <dir> final.js
+	gravity pull [<dir>] final.js
 
 
 Unit Tests

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /*global process, require*/
-/* vim: set syntax=javascript: */
 var
 	gravity = require('./gravity.js'),
 
@@ -9,18 +8,21 @@ var
 		var
 			len = argv.length,
 			command = len > 2 && argv[2],
-			dir = len > 3 && argv[3],
+			arg3 = len > 3 && argv[3],
 			arg4 = len > 4 && argv[4],
-			lastArg = arg4 || dir,
+			expectedLengths = { build: 5, get: 5, list: 4, pull: 5, serve: 5 },
+			expectedLen = expectedLengths[command],
+			isExpectedLen = len === expectedLen,
+			dir = isExpectedLen ? arg3 : '.',
+			lastArg = isExpectedLen ? arg4 : arg3,
 			slash = dir && (dir.length - 1),
 			args = {},
 			hostPort,
-			badUsage = (len < 3 ||
+			badUsage = (len < 2 || len > 5 ||
 				(command !== 'build' && command !== 'get' && command !== 'list' &&
 					command !== 'pull' && command !== 'serve') ||
-				(command === 'list' && len < 3) ||
-				((command === 'get' || command === 'pull') && len < 4) ||
-				(command === 'build' && len < 4))
+				((command === 'get' || command === 'pull') && len < 3) ||
+				(command === 'build' && len < 3))
 		;
 
 		if (badUsage || command === 'build' || command === 'serve' || command === 'version') {
@@ -33,13 +35,13 @@ var
 		if (badUsage) {
 			console.log('');
 			console.log('Usage:');
-			console.log('  gravity build <dir> <outdir>');
+			console.log('  gravity build [<map>] <outdir>');
 			console.log('    or');
-			console.log('  gravity list <dir>');
+			console.log('  gravity list [<map>]');
 			console.log('    or');
-			console.log('  gravity pull <dir> <path>');
+			console.log('  gravity pull [<map>] <path>');
 			console.log('    or');
-			console.log('  gravity serve <dir> [[<host>]:[<port>]]');
+			console.log('  gravity serve [<map>] <host>:<port>');
 			process.exit(1);
 		}
 
@@ -58,7 +60,7 @@ var
 		}
 
 		if (args.serve) {
-			hostPort = (arg4 || ':').split(':');
+			hostPort = (lastArg || ':').split(':');
 			args.host = hostPort[0];
 			args.port = hostPort[1];
 		}
