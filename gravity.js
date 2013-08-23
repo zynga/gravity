@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.3';
+	gravity.VERSION = '0.7.4';
 
 	var
 		atom = require('atom-js'),
@@ -104,9 +104,15 @@
 		var
 			chunks = [],
 			isHTTPS = fileURL.indexOf('https') === 0,
-			client = isHTTPS ? https : http
+			client = isHTTPS ? https : http,
+			options = fileURL
 		;
-		client.get(fileURL, function (res) {
+		if (isHTTPS) {
+			options = url.parse(fileURL);
+			options.rejectUnauthorized = false;
+			options.agent = new https.Agent(options);
+		}
+		client.get(options, function (res) {
 			res.on('data', function (chunk) {
 				chunks.push(chunk);
 			}).on('end', function () {
