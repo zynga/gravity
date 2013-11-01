@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.4';
+	gravity.VERSION = '0.7.5';
 
 	var
 		atom = require('atom-js'),
@@ -270,7 +270,7 @@
 	// together into a single blob.
 	packResources = function (map, base, resources, callback) {
 		var
-			packer = atom.create(),
+			packer = atom(),
 			i = -1,
 			len = resources.length
 		;
@@ -384,7 +384,7 @@
 				path = slashpath.substr(1),
 				dotparts = path.split('.'),
 				ext = dotparts.pop(),
-				request = atom.create(),
+				request = atom(),
 				logURL = slashpath
 			;
 			if (querystring) {
@@ -395,8 +395,12 @@
 				return httpError(res, 404, 'Not Found', path, true);
 			}
 
-			gravity.map(mapURI, function (result) {
-				request.set('map', result);
+			gravity.map(mapURI, function (err, result) {
+				if (err) {
+					throw err;
+				} else {
+					request.set('map', result);
+				}
 			});
 
 			if (path === '') {
@@ -489,7 +493,7 @@
 	}
 
 	function recursiveDirectoryListing(dir, callback) {
-		var a = atom.create(), chain = a.chain, list = [], set = a.set;
+		var a = atom(), chain = a.chain, list = [], set = a.set;
 		chain(function (next) {
 			fs.readdir(dir, function (err, files) {
 				arrayEach(files, function (i, file) {
@@ -520,7 +524,7 @@
 	}
 
 	function getList(base, path, mapNode, callback) {
-		var a = atom.create(), chain = a.chain, list = [];
+		var a = atom(), chain = a.chain, list = [];
 		eachMapProperty(mapNode, function (prop, val, type, isDir) {
 			if (prop.charAt(0) === '~') {
 				return;
@@ -557,7 +561,7 @@
 	}
 
 	function write(outDir, path, content, callback) {
-		var call = atom.create(), outPath = outDir + '/' + path;
+		var call = atom(), outPath = outDir + '/' + path;
 		gravity.logger('write ' + outPath);
 		fs.open(outPath, 'w', function (err, fd) {
 			if (err) {
@@ -574,9 +578,9 @@
 	function createDirectories(out, path, callback) {
 		//gravity.logger('createDirectories(' + out + ', ' + path + ')');
 		var
-			action = atom.create(),
+			action = atom(),
 			splits = getResourcePathSplits(path),
-			dirs = atom.create(),
+			dirs = atom(),
 			last
 		;
 		splits.shift(); // Don't create the file itself as a directory
@@ -615,40 +619,52 @@
 	}
 
 	gravity.build = function (mapOrURI, base, out, callback) {
-		var build = atom.create(), files = atom.create();
-		gravity.map(mapOrURI, function (map) {
-			build.set('map', map);
-			gravity.list(map, base, function (err, list) {
-				if (err) {
-					build.set('done', err);
-				} else {
-					build.set('list', list);
-				}
-			});
+		var
+			build = atom(),
+			buildSet = build.set,
+			files = atom()
+		;
+		gravity.map(mapOrURI, function (err, map) {
+			if (err) {
+				buildSet('done', err);
+			} else {
+				buildSet('map', map);
+				gravity.list(map, base, function (err, list) {
+					if (err) {
+						buildSet('done', err);
+					} else {
+						buildSet('list', list);
+					}
+				});
+			}
 		});
 		build.once(['map', 'list'], function (map, list) {
 			arrayEach(list, function (i, path) {
-				var item = atom.create();
+				var
+					item = atom(),
+					itemOnce = item.once,
+					itemSet = item.set
+				;
 				gravity.pull(map, base, path, function (err, content) {
 					if (err) {
-						build.set('done', err);
+						buildSet('done', err);
 					} else {
-						item.set('content', content);
+						itemSet('content', content);
 					}
 				});
-				item.once('content', function (content) {
+				itemOnce('content', function (content) {
 					createDirectories(out, path, function (err) {
 						if (err) {
-							build.set('done', err);
+							buildSet('done', err);
 						} else {
-							item.set('dir', true);
+							itemSet('dir', true);
 						}
 					});
 				});
-				item.once(['content', 'dir'], function (content) {
+				itemOnce(['content', 'dir'], function (content) {
 					write(out, path, content, function (err) {
 						if (err) {
-							build.set('done', err);
+							buildSet('done', err);
 						} else {
 							files.set(path, true);
 						}
@@ -656,35 +672,55 @@
 				});
 			});
 			files.once(list, function () {
-				build.set('done', null);
+				buildSet('done', null);
 			});
 		});
 		build.once('done', callback);
 	};
 
 	gravity.list = function (mapOrURI, base, callback) {
-		gravity.map(mapOrURI, function (map) {
-			getList(base, '', map, function (list) {
-				//gravity.logger('gravity.list(...)', { mapOrURI: mapOrURI, base: base });
-				//gravity.logger(list);
-				callback(undefined, list);
-			});
+		gravity.map(mapOrURI, function (err, map) {
+			if (err) {
+				callback(err);
+			} else {
+				getList(base, '', map, function (list) {
+					//gravity.logger('gravity.list(...)', { mapOrURI: mapOrURI, base: base });
+					//gravity.logger(list);
+					callback(undefined, list);
+				});
+			}
 		});
 	};
 
 	gravity.map = function (mapOrURI, callback) {
 		if (typeof mapOrURI === 'string') {
-			var gravMapJSON = stripComments(fs.readFileSync(mapOrURI) + '');
-			callback(JSON.parse(gravMapJSON));
+			fs.readFile(mapOrURI, function (err, content) {
+				var gravMapJSON, mapData;
+				if (err) {
+					callback(err);
+				} else {
+					gravMapJSON = stripComments(content + '');
+					try {
+						mapData = JSON.parse(gravMapJSON);
+						callback(null, mapData);
+					} catch (ex) {
+						callback(ex);
+					}
+				}
+			});
 		} else {
-			callback(mapOrURI);
+			callback(null, mapOrURI);
 		}
 	};
 
 	gravity.pull = function (mapOrURI, base, path, callback) {
 		//gravity.logger('gravity.pull(...)', { mapOrURI: mapOrURI, base: base, path: path });
-		gravity.map(mapOrURI, function (map) {
-			getResource(map, base, false, path, callback);
+		gravity.map(mapOrURI, function (err, map) {
+			if (err) {
+				callback(err);
+			} else {
+				getResource(map, base, false, path, callback);
+			}
 		});
 	};
 

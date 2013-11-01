@@ -9,7 +9,7 @@ var
 	argv = inNode && process.argv,
 	arg2 = argv && argv.length > 2 && argv[2],
 	verbose = inBrowser || arg2 === '-v',
-	a = atom.create(),
+	a = atom(),
 	chain = a.chain,
 	results = [],
 	totals = { success: 0, fail: 0, total: 0 },
@@ -39,6 +39,30 @@ assert('gravity.map() is a function', typeof gravity.map === 'function');
 assert('gravity.pull() is a function', typeof gravity.pull === 'function');
 assert('gravity.serve() is a function', typeof gravity.serve === 'function');
 
+
+chain(function (next) {
+	var dir = 'nosuchdir';
+	gravity.build(dir + '/gravity.map', dir, 'nosuchOUTdir', function (err) {
+		assert(
+			'gravity.build() returns an error if passed a non-existent ' +
+				'gravity.map file path',
+			!!err
+		);
+		next();
+	});
+});
+
+chain(function (next) {
+	var dir = 'nosuchdir';
+	gravity.list(dir + '/gravity.map', dir, function (err) {
+		assert(
+			'gravity.list() returns an error if passed a non-existent ' +
+				'gravity.map file path',
+			!!err
+		);
+		next();
+	});
+});
 
 chain(function (next) {
 	var
