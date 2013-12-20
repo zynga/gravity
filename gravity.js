@@ -22,10 +22,11 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.5';
+	gravity.VERSION = '0.7.6';
 
 	var
 		atom = require('atom-js'),
+		chain = atom().chain,
 		http = require('http'),
 		https = require('https'),
 		url = require('url'),
@@ -178,18 +179,22 @@
 	// Given a local file path (relative to base), fetch the file contents.
 	function getFile(base, path, callback, addLineHints) {
 		var filePath = base + '/' + path;
-		fs.stat(filePath, function (err, stat) {
-			if (err || stat.isDirectory()) {
-				callback({ code: 404, message: 'Not Found: ' + path });
-			} else {
-				fs.readFile(filePath, function (err, content) {
-					callback(
-						err ? { code: 500, message: 'Internal error' } : null,
-						(addLineHints && endsWith(filePath, '.js')) ?
-							new Buffer(addLineHints(path, content + '')) : content
-					);
-				});
-			}
+		chain(function (next) {
+			fs.stat(filePath, function (err, stat) {
+				if (err || stat.isDirectory()) {
+					callback({ code: 404, message: 'Not Found: ' + path });
+					next();
+				} else {
+					fs.readFile(filePath, function (err, content) {
+						callback(
+							err ? { code: 500, message: 'Internal error' } : null,
+							(addLineHints && endsWith(filePath, '.js')) ?
+								new Buffer(addLineHints(path, content + '')) : content
+						);
+						next();
+					});
+				}
+			});
 		});
 	}
 
