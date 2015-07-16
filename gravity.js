@@ -22,7 +22,7 @@
 		return me;
 	}('gravity'));
 
-	gravity.VERSION = '0.7.6';
+	gravity.VERSION = '0.7.7';
 
 	var
 		atom = require('atom-js'),
@@ -438,7 +438,10 @@
 				if (inArray(utf8Types, mimeType)) {
 					contentType += '; charset=utf-8';
 				}
-				res.writeHead(200, { 'Content-Type': contentType });
+				res.writeHead(200, {
+					'Content-Type': contentType,
+					'Access-Control-Allow-Origin': '*'
+				});
 				res.end(content, 'binary');
 				serverLog('200 ' + logURL);
 			});
